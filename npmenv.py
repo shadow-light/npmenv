@@ -47,17 +47,41 @@ def _cli():
     cmd = sys.argv[1]
 
     # Special case: help command prints npmenv commands and then hands over to npm
-    if cmd == 'help':
-        print(f"npmenv [{__version__}]\nenv-list\n")
+    if cmd in ('help', '--help', '-h'):
+        help = (
+            f"npmenv {__version__}",
+            "env-list               List all currently existing environments",
+            "env-location           Output path to env for current dir (may not exist yet)",
+            "env-run cmd [args]     Run command with env's bin dir in start of PATH",
+            "env-rm [env_id]        Remove the env for current dir (or env with given id)",
+        )
+        print('\n'.join(help) + '\n\n')
 
     # Run npmenv commands, otherwise handing over to npm
     if cmd == 'env-list':
+        if len(sys.argv) > 2:
+            sys.exit("env-list doesn't take any arguments")
         env_list()
+    elif cmd == 'env-location':
+        if len(sys.argv) > 2:
+            sys.exit("env-location doesn't take any arguments")
+        env_location()
+    elif cmd == 'env-run':
+        if len(sys.argv) < 3:
+            sys.exit("env-run requires a command to be given")
+        env_run(sys.argv[2:])
+    elif cmd == 'env-rm':
+        if len(sys.argv) > 3:
+            sys.exit("env-rm was given too many arguments")
+        try:
+            env_rm(None if len(sys.argv) < 3 else sys.argv[2])
+        except NpmenvException as exc:
+            sys.exit(exc)
     else:
-        npm(sys.argv[1:])
+        env_npm(sys.argv[1:])
 
 
-def npm(args, proj_dir=None):
+def env_npm(args, proj_dir=None):
     """ Execute npm with given args in env dir of given project dir """
 
     # Determine paths
@@ -124,7 +148,12 @@ def env_list():
 
 
 def env_location(proj_dir=None):
-    """ Print env dir path for given project dir (without ending newline) """
+    """ Print env dir path for given project dir (without ending newline)
+
+    NOTE The env may not exist yet; this just reports where it would be if it did
+        And is mainly here in case scripts need it (hence no trailing newline)
+
+    """
     print(_get_env_dir(_resolve_proj_dir(proj_dir)), end='')
 
 
