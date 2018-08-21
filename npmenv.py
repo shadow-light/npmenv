@@ -1,4 +1,5 @@
 
+import os
 import sys
 import subprocess
 from shutil import rmtree
@@ -127,8 +128,23 @@ def env_location(proj_dir=None):
     print(_get_env_dir(_resolve_proj_dir(proj_dir)), end='')
 
 
-def env_run():
-    pass
+def env_run(args, proj_dir=None):
+    """ Run a command with node_modules/.bin at start of PATH environment variable
+
+    NOTE If node is installed as a package then it will (hopefully) be used to run scripts
+
+    """
+
+    # Get path to env's .bin
+    proj_dir = _resolve_proj_dir(proj_dir)
+    bin_dir = _get_env_dir(proj_dir) / 'node_modules/.bin'
+
+    # Copy env variables and add the env's bin dir to start of PATH
+    process_env = os.environ.copy()
+    process_env['PATH'] = str(bin_dir) + os.pathsep + process_env['PATH']
+
+    # Run the given args with the modified env
+    subprocess.run(args, env=process_env)
 
 
 if __name__ == '__main__':
