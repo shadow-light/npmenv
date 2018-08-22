@@ -113,8 +113,12 @@ def env_npm(args, proj_dir=None):
                 ef.unlink()
 
     # Execute npm in env dir
-    with env_dir:
+    cwd = Path.cwd()
+    os.chdir(env_dir)
+    try:
         subprocess.run(['npm'] + args)
+    finally:
+        os.chdir(cwd)
 
     # If config/lock files have just been created, move to project and symlink
     for pf, ef in ((proj_config, env_config), (proj_lock, env_lock)):
