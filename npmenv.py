@@ -22,7 +22,7 @@ class NpmenvException(Exception):
 
 def _get_env_id(proj_dir):
     """ Return env id for the given project dir """
-    hash = urlsafe_b64encode(sha256(str(proj_dir)).digest())[:8]
+    hash = urlsafe_b64encode(sha256(str(proj_dir).encode()).digest())[:8]
     return f'{proj_dir.name}-{hash}'
 
 
@@ -54,8 +54,9 @@ def _cli():
             "env-location           Output path to env for current dir (may not exist yet)",
             "env-run cmd [args]     Run command with env's bin dir in start of PATH",
             "env-rm [env_id]        Remove the env for current dir (or env with given id)",
+            "----------",
         )
-        print('\n'.join(help) + '\n\n')
+        print('\n'.join(help) + '\n')
 
     # Run npmenv commands, otherwise handing over to npm
     if cmd == 'env-list':
