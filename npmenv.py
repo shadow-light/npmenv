@@ -91,7 +91,7 @@ def env_npm(args, proj_dir=None):
     env_dir = _get_env_dir(proj_dir)
     env_config = env_dir.joinpath('package.json')
     env_lock = env_dir.joinpath('package-lock.json')
-    env_pathfile = env_dir.joinpath('PROJECT_PATH')
+    env_pathfile = env_dir.joinpath('.project')
 
     # Init env dir if doesn't exist
     if not env_dir.exists():
@@ -131,7 +131,7 @@ def env_rm(env_id=None):
         # Do some double checks since this is a dangerous operation
         assert env_dir.is_absolute()
         assert env_dir.parent == NPMENV_DIR
-        assert env_dir.joinpath('PROJECT_PATH').is_file()
+        assert env_dir.joinpath('.project').is_file()
         rmtree(env_dir)
     else:
         raise NpmenvException(f"No env exists {exc_suffix}")
@@ -140,8 +140,8 @@ def env_rm(env_id=None):
 def env_list():
     """ Print list of npmenv ids and their corresponding target dirs """
     for item in NPMENV_DIR.iterdir():
-        # NOTE Ignores any files or dirs that don't have a PROJECT_PATH file
-        path_file = item.joinpath('PROJECT_PATH')
+        # NOTE Ignores any files or dirs that don't have a .project file
+        path_file = item.joinpath('.project')
         if path_file.is_file():
             path = path_file.read_text()
             print(f'{item.name}: {path}')
