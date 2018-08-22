@@ -22,8 +22,9 @@ class NpmenvException(Exception):
 
 def _get_env_id(proj_dir):
     """ Return env id for the given project dir """
-    hash = urlsafe_b64encode(sha256(str(proj_dir).encode()).digest())[:8]
-    return f'{proj_dir.name}-{hash}'
+    hash = sha256(str(proj_dir).encode()).digest()
+    hash_sample = urlsafe_b64encode(hash).decode()[:8]
+    return f'{proj_dir.name}-{hash_sample}'
 
 
 def _get_env_dir(proj_dir):
