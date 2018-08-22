@@ -162,7 +162,8 @@ def env_location(proj_dir=None):
 def env_run(args, proj_dir=None):
     """ Run a command with node_modules/.bin at start of PATH environment variable
 
-    NOTE If node is installed as a package then it will (hopefully) be used to run scripts
+    NOTE If node is installed as a package then it should be used to run scripts
+        WARN Scripts may depend on system binaries so should not clear existing PATH value
 
     """
 
