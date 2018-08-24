@@ -1,0 +1,11 @@
+[flake8]
+
+max-line-length = 90
+max-complexity = 10
+
+# E127 and E128 ignored so don't need to indent up to opening bracket:
+#   do_something(long, list, of, args,
+#       indent, here, rather, than, up, to, opening, bracket)
+
+# WARN Use extend-ignore to not override default builtin ignore config
+extend-ignore = E127, E128
