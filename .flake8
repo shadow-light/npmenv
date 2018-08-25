@@ -1,7 +1,7 @@
 [flake8]
 
 max-line-length = 90
-max-complexity = 10
+max-complexity = 12
 
 # E127 and E128 ignored so don't need to indent up to opening bracket:
 #   do_something(long, list, of, args,
