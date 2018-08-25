@@ -10,7 +10,7 @@ from hashlib import sha256
 from appdirs import user_data_dir
 
 
-__version__ = '0'
+__version__ = 'dev'
 
 
 NPMENV_DIR = Path(user_data_dir('npmenv', 'shadow-light'))
@@ -51,10 +51,10 @@ def _cli():
     if cmd in ('help', '--help', '-h'):
         help = (
             f"npmenv {__version__}",
-            "env-list               List all currently existing environments",
-            "env-location           Output path to env for current dir (may not exist yet)",
-            "env-run cmd [args]     Run command with env's bin dir in start of PATH",
-            "env-rm [env_id]        Remove the env for current dir (or env with given id)",
+            "env-list            List all currently existing environments",
+            "env-location        Output path to env for current dir (may not exist yet)",
+            "env-run cmd [args]  Run command with env's bin dir in start of PATH",
+            "env-rm [env_id]     Remove the env for current dir (or env with given id)",
             "----------",
         )
         print('\n'.join(help) + '\n')
