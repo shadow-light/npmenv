@@ -63,11 +63,13 @@ def _cli():
     if cmd == 'env-list':
         if len(sys.argv) > 2:
             sys.exit("env-list doesn't take any arguments")
-        env_list()
+        for env_id, proj_dir in env_list():
+            print(f'{env_id}: {proj_dir}')
     elif cmd == 'env-location':
         if len(sys.argv) > 2:
             sys.exit("env-location doesn't take any arguments")
-        env_location()
+        # NOTE No trailing newline so scripts can use without needing to strip
+        print(env_location(), end='')
     elif cmd == 'env-run':
         if len(sys.argv) < 3:
             sys.exit("env-run requires a command to be given")
@@ -144,23 +146,23 @@ def env_rm(env_id=None):
 
 
 def env_list():
-    """ Print list of npmenv ids and their corresponding target dirs """
+    """ Return list of npmenv ids and their corresponding project dirs """
+    envs = []
     for item in NPMENV_DIR.iterdir():
         # NOTE Ignores any files or dirs that don't have a .project file
         path_file = item.joinpath('.project')
         if path_file.is_file():
-            path = path_file.read_text()
-            print(f'{item.name}: {path}')
+            envs.append((item.name, path_file.read_text()))
+    return envs
 
 
 def env_location(proj_dir=None):
-    """ Print env dir path for given project dir (without ending newline)
+    """ Return env dir path for given project dir
 
     NOTE The env may not exist yet; this just reports where it would be if it did
-        And is mainly here in case scripts need it (hence no trailing newline)
 
     """
-    print(_get_env_dir(_resolve_proj_dir(proj_dir)), end='')
+    return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
 def env_run(args, proj_dir=None):
