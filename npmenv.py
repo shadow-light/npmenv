@@ -20,6 +20,9 @@ class NpmenvException(Exception):
     pass
 
 
+# PRIVATE
+
+
 def _get_env_id(proj_dir):
     """ Return env id for the given project dir """
     hash = sha256(str(proj_dir).encode()).digest()
@@ -83,6 +86,9 @@ def _cli():
             sys.exit(exc)
     else:
         env_npm(sys.argv[1:])
+
+
+# PUBLIC
 
 
 def env_npm(args, proj_dir=None):
@@ -183,6 +189,9 @@ def env_run(args, proj_dir=None):
 
     # Run the given args with the modified env
     subprocess.run(args, env=process_env)
+
+
+# EXECUTE
 
 
 if __name__ == '__main__':
