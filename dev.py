@@ -21,7 +21,7 @@ def test_unit(inv):
 
 @task
 def release(inv):
-    raise NotImplentedError()
+    raise NotImplementedError()
 
 
 program = Program('dev', Collection(test, test_lint, test_unit, release))
