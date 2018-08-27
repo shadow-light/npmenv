@@ -7,6 +7,7 @@ from typing import Union, Sequence
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
+from contextlib import contextmanager
 
 from appdirs import user_data_dir
 
@@ -31,6 +32,17 @@ class NpmenvException(Exception):
 
 
 # PRIVATE
+
+
+@contextmanager
+def _cd(path:Path) -> None:
+    """ Temporarily change to a certain dir """
+    cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(cwd)
 
 
 def _get_env_id(proj_dir:Path) -> str:
@@ -133,12 +145,8 @@ def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
                 ef.unlink()
 
     # Execute npm in env dir
-    cwd = Path.cwd()
-    os.chdir(env_dir)
-    try:
+    with _cd(env_dir):
         subprocess.run(['npm', *args])
-    finally:
-        os.chdir(cwd)
 
     # If config/lock files have just been created, move to project and symlink
     for pf, ef in ((proj_config, env_config), (proj_lock, env_lock)):
