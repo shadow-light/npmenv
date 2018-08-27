@@ -35,7 +35,7 @@ class NpmenvException(Exception):
 
 
 @contextmanager
-def _cd(path:Path) -> None:
+def _cd(path:Path_or_str) -> None:
     """ Temporarily change to a certain dir """
     cwd = Path.cwd()
     os.chdir(path)
