@@ -3,11 +3,21 @@ import os
 import sys
 import subprocess
 from shutil import rmtree
+from typing import Union, Sequence
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
 
 from appdirs import user_data_dir
+
+
+# CUSTOM TYPES
+
+
+Path_or_str = Union[Path, str]
+
+
+# MODULE LEVEL
 
 
 __version__ = 'dev'
@@ -23,19 +33,20 @@ class NpmenvException(Exception):
 # PRIVATE
 
 
-def _get_env_id(proj_dir):
+def _get_env_id(proj_dir:Path) -> str:
     """ Return env id for the given project dir """
+    # WARN Only take Path for arg as hash would change if e.g. trailing newline in str
     hash = sha256(str(proj_dir).encode()).digest()
     hash_sample = urlsafe_b64encode(hash).decode()[:8]
     return f'{proj_dir.name}-{hash_sample}'
 
 
-def _get_env_dir(proj_dir):
+def _get_env_dir(proj_dir:Path) -> Path:
     """ Return path of env dir for given project dir """
     return NPMENV_DIR.joinpath(_get_env_id(proj_dir))
 
 
-def _resolve_proj_dir(given_proj_dir=None):
+def _resolve_proj_dir(given_proj_dir:Path_or_str=None) -> Path:
     """ Return a resolved Path obj for given project dir (defaulting to CWD)
 
     WARN Should use for any user-given path to ensure env id consistent
@@ -46,7 +57,7 @@ def _resolve_proj_dir(given_proj_dir=None):
     return Path(given_proj_dir).resolve()
 
 
-def _cli():
+def _cli() -> None:
     """ Process argv and wrap npm or execute custom command """
     cmd = sys.argv[1]
 
@@ -91,7 +102,7 @@ def _cli():
 # PUBLIC
 
 
-def env_npm(args, proj_dir=None):
+def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
     """ Execute npm with given args in env dir of given project dir """
 
     # Determine paths
@@ -124,7 +135,7 @@ def env_npm(args, proj_dir=None):
     cwd = Path.cwd()
     os.chdir(env_dir)
     try:
-        subprocess.run(['npm'] + args)
+        subprocess.run(['npm', *args])
     finally:
         os.chdir(cwd)
 
@@ -135,11 +146,16 @@ def env_npm(args, proj_dir=None):
             ef.symlink_to(pf)
 
 
-def env_rm(env_id=None):
-    """ Remove the env for current dir, or for id if given """
-    exc_suffix = f"with id {env_id}" if env_id else "for current dir"
-    if not env_id:
-        env_id = _get_env_id(_resolve_proj_dir())
+def env_rm(identifier:Path_or_str=None) -> None:
+    """ Remove the env for given project dir or env id (defaults to CWD) """
+
+    # Get env id from project path if not given
+    if isinstance(identifier, str):
+        env_id = identifier
+    else:
+        env_id = _get_env_id(_resolve_proj_dir(identifier))
+
+    # Remove the env dir
     env_dir = NPMENV_DIR / env_id
     if env_dir.exists():
         # Do some double checks since this is a dangerous operation
@@ -148,10 +164,11 @@ def env_rm(env_id=None):
         assert env_dir.joinpath('.project').is_file()
         rmtree(env_dir)
     else:
-        raise NpmenvException(f"No env exists {exc_suffix}")
+        var = identifier if identifier else env_dir
+        raise NpmenvException(f"No env exists for {var}")
 
 
-def env_list():
+def env_list() -> list:
     """ Return list of npmenv ids and their corresponding project dirs """
     envs = []
     for item in NPMENV_DIR.iterdir():
@@ -162,7 +179,7 @@ def env_list():
     return envs
 
 
-def env_location(proj_dir=None):
+def env_location(proj_dir:Path_or_str=None) -> Path:
     """ Return env dir path for given project dir
 
     NOTE The env may not exist yet; this just reports where it would be if it did
@@ -171,7 +188,7 @@ def env_location(proj_dir=None):
     return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
-def env_run(args, proj_dir=None):
+def env_run(args:Sequence, proj_dir:Path_or_str=None) -> None:
     """ Run a command with node_modules/.bin at start of PATH environment variable
 
     NOTE If node is installed as a package then it should be used to run scripts
