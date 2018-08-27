@@ -36,6 +36,7 @@ class NpmenvException(Exception):
 def _get_env_id(proj_dir:Path) -> str:
     """ Return env id for the given project dir """
     # WARN Only take Path for arg as hash would change if e.g. trailing newline in str
+    assert proj_dir.is_absolute()
     hash = sha256(str(proj_dir).encode()).digest()
     hash_sample = urlsafe_b64encode(hash).decode()[:8]
     return f'{proj_dir.name}-{hash_sample}'
