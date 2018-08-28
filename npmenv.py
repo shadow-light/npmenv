@@ -104,10 +104,7 @@ def _cli() -> None:
     elif cmd == 'env-rm':
         if len(sys.argv) > 3:
             sys.exit("env-rm was given too many arguments")
-        try:
-            env_rm(None if len(sys.argv) < 3 else sys.argv[2])
-        except NpmenvException as exc:
-            sys.exit(exc)
+        env_rm(None if len(sys.argv) < 3 else sys.argv[2])
     else:
         env_npm(sys.argv[1:])
 
