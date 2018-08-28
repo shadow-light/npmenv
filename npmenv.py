@@ -105,7 +105,8 @@ def _cli() -> None:
         elif cmd == 'env-rm':
             if len(sys.argv) > 3:
                 sys.exit("env-rm was given too many arguments")
-            env_rm(None if len(sys.argv) < 3 else sys.argv[2])
+            proj_dir = env_rm(None if len(sys.argv) < 3 else sys.argv[2])
+            print(f"Removed environment for {proj_dir}")
         else:
             env_npm(sys.argv[1:])
     except NpmenvException as exc:
@@ -155,7 +156,7 @@ def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
             ef.symlink_to(pf)
 
 
-def env_rm(identifier:Path_or_str=None) -> None:
+def env_rm(identifier:Path_or_str=None) -> str:
     """ Remove the env for given project dir or env id (defaults to CWD) """
 
     # Get env id from project path if not given
@@ -164,19 +165,22 @@ def env_rm(identifier:Path_or_str=None) -> None:
     else:
         env_id = _get_env_id(_resolve_proj_dir(identifier))
 
-    # Remove the env dir
+    # Determine env dir
     env_dir = NPMENV_DIR / env_id
-    if env_dir.exists():
-        proj_dir = env_dir.joinpath('.project').read_text()
-        # Do some double checks since this is a dangerous operation
-        assert env_dir.is_absolute()
-        assert env_dir.parent == NPMENV_DIR
-        rmtree(env_dir)
-        print(f"Removed environment for {proj_dir}")
-    else:
+    if not env_dir.exists():
+        # Raise helpful exception
         join = 'with id' if isinstance(identifier, str) else 'for dir'
         value = identifier if identifier else env_dir
         raise NpmenvException(f"No env exists {join} {value}")
+
+    # Do some double checks since this is a dangerous operation
+    assert env_dir.is_absolute()
+    assert env_dir.parent == NPMENV_DIR
+
+    # Remove the env dir (returning project dir for the env as a str)
+    proj_dir = env_dir.joinpath('.project').read_text()
+    rmtree(env_dir)
+    return proj_dir
 
 
 def env_list() -> list:
