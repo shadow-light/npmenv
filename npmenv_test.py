@@ -101,7 +101,7 @@ def fake_project():
 # PRIVATE
 
 
-def _cd_test(sandbox):
+def test__cd(sandbox):
     assert Path.cwd() != sandbox['envs']
     with npmenv._cd(sandbox['envs']):
         assert Path.cwd() == sandbox['envs']
@@ -109,16 +109,16 @@ def _cd_test(sandbox):
 
 
 @pytest.mark.sandbox_disable
-def _get_env_id_test(fake_project):
+def test__get_env_id(fake_project):
     assert npmenv._get_env_id(fake_project['proj_dir']) == fake_project['env_id']
 
 
 @pytest.mark.sandbox_disable
-def _get_env_dir_test(fake_project):
+def test__get_env_dir(fake_project):
     assert npmenv._get_env_dir(fake_project['proj_dir']) == fake_project['env_dir']
 
 
-def _resolve_proj_dir_test(sandbox):
+def test__resolve_proj_dir(sandbox):
     # Test passing no arg (sandbox cd'd into project dir already)
     assert npmenv._resolve_proj_dir() == sandbox['proj_dir']
     # Test passing a relative path
@@ -127,7 +127,7 @@ def _resolve_proj_dir_test(sandbox):
         assert npmenv._resolve_proj_dir(relative_to_parent) == sandbox['proj_dir']
 
 
-class CliTest:
+class TestCli:
     """ Should call methods for respective arguments and exit/print as result
 
     NOTE Tests should be simple as most things tested within the method tests already
@@ -183,7 +183,7 @@ class CliTest:
 # PUBLIC
 
 
-class EnvNpmTest:
+class TestEnvNpm:
     """ `env_npm` should link to existing config, call npm, and transfer new config """
 
     def test_no_files_init(self, sandbox):
@@ -242,7 +242,7 @@ class EnvNpmTest:
         assert not sandbox['env_lock'].is_symlink()
 
 
-def env_rm_test(sandbox):
+def test_env_rm(sandbox):
     # Helper
     def rm_with_checks(*args):
         assert not npmenv.env_list()
@@ -262,7 +262,7 @@ def env_rm_test(sandbox):
         npmenv.env_rm()
 
 
-def env_list_test():
+def test_env_list():
     # Fresh env so should be none
     assert not npmenv.env_list()
     # Trigger creating env for CWD
@@ -271,14 +271,14 @@ def env_list_test():
     assert npmenv.env_list()[0][1] == str(Path.cwd())
 
 
-def env_location_test(sandbox):
+def test_env_location(sandbox):
     # Simple test (just made of already tested private methods anyway)
     env_dir = npmenv.env_location()
     env_dir.relative_to(sandbox['envs'])  # Raises ValueError if can't
     assert env_dir.name.startswith(sandbox['proj_dir'].name + '-')
 
 
-def env_run_test(sandbox, capsys):
+def test_env_run(sandbox, capsys):
     # Confirm exception if no bin dir
     with pytest.raises(npmenv.NpmenvException):
         npmenv.env_run(['node', '--version'])
