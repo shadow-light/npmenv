@@ -207,7 +207,13 @@ def env_run(args:Sequence, proj_dir:Path_or_str=None) -> None:
 
     # Get path to env's .bin
     proj_dir = _resolve_proj_dir(proj_dir)
-    bin_dir = _get_env_dir(proj_dir) / 'node_modules/.bin'
+    env_dir = _get_env_dir(proj_dir)
+    if not env_dir.is_dir():
+        raise NpmenvException("Env does not exist (run `npmenv install`)")
+    bin_dir = env_dir / 'node_modules/.bin'
+    if not bin_dir.is_dir():
+        raise NpmenvException(
+            "Env does not have a .bin dir (install a package with an executable first)")
 
     # Copy env variables and add the env's bin dir to start of PATH
     process_env = os.environ.copy()
