@@ -87,26 +87,29 @@ def _cli() -> None:
         print('\n'.join(help) + '\n')
 
     # Run npmenv commands, otherwise handing over to npm
-    if cmd == 'env-list':
-        if len(sys.argv) > 2:
-            sys.exit("env-list doesn't take any arguments")
-        for env_id, proj_dir in env_list():
-            print(f'{env_id}: {proj_dir}')
-    elif cmd == 'env-location':
-        if len(sys.argv) > 2:
-            sys.exit("env-location doesn't take any arguments")
-        # NOTE No trailing newline so scripts can use without needing to strip
-        print(env_location(), end='')
-    elif cmd == 'env-run':
-        if len(sys.argv) < 3:
-            sys.exit("env-run requires a command to be given")
-        env_run(sys.argv[2:])
-    elif cmd == 'env-rm':
-        if len(sys.argv) > 3:
-            sys.exit("env-rm was given too many arguments")
-        env_rm(None if len(sys.argv) < 3 else sys.argv[2])
-    else:
-        env_npm(sys.argv[1:])
+    try:
+        if cmd == 'env-list':
+            if len(sys.argv) > 2:
+                sys.exit("env-list doesn't take any arguments")
+            for env_id, proj_dir in env_list():
+                print(f'{env_id}: {proj_dir}')
+        elif cmd == 'env-location':
+            if len(sys.argv) > 2:
+                sys.exit("env-location doesn't take any arguments")
+            # NOTE No trailing newline so scripts can use without needing to strip
+            print(env_location(), end='')
+        elif cmd == 'env-run':
+            if len(sys.argv) < 3:
+                sys.exit("env-run requires a command to be given")
+            env_run(sys.argv[2:])
+        elif cmd == 'env-rm':
+            if len(sys.argv) > 3:
+                sys.exit("env-rm was given too many arguments")
+            env_rm(None if len(sys.argv) < 3 else sys.argv[2])
+        else:
+            env_npm(sys.argv[1:])
+    except NpmenvException as exc:
+        sys.exit(exc)
 
 
 # PUBLIC
@@ -164,14 +167,16 @@ def env_rm(identifier:Path_or_str=None) -> None:
     # Remove the env dir
     env_dir = NPMENV_DIR / env_id
     if env_dir.exists():
+        proj_dir = env_dir.joinpath('.project').read_text()
         # Do some double checks since this is a dangerous operation
         assert env_dir.is_absolute()
         assert env_dir.parent == NPMENV_DIR
-        assert env_dir.joinpath('.project').is_file()
         rmtree(env_dir)
+        print(f"Removed environment for {proj_dir}")
     else:
-        var = identifier if identifier else env_dir
-        raise NpmenvException(f"No env exists for {var}")
+        join = 'with id' if isinstance(identifier, str) else 'for dir'
+        value = identifier if identifier else env_dir
+        raise NpmenvException(f"No env exists {join} {value}")
 
 
 def env_list() -> list:
