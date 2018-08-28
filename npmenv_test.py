@@ -46,11 +46,11 @@ def sandbox(request, tmpdir_factory, monkeypatch):
         return
 
     # Create tmp project
-    proj_dir = tmpdir_factory.mkdir('npmenv_test_project')
+    proj_dir = tmpdir_factory.mktemp('npmenv_test_project')
     proj_dir = Path(str(proj_dir))
 
     # Create tmp envs location
-    envs = tmpdir_factory.mkdir('npmenv_test_envs')
+    envs = tmpdir_factory.mktemp('npmenv_test_envs')
     envs = Path(str(envs))
 
     # Override NPMENV_DIR and change into project dir (monkeypatch undoes these later)
