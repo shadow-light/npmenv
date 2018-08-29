@@ -15,9 +15,10 @@ def test_lint(inv):
 
 
 @task
-def test_unit(inv, pdb=False):
-    pdb = ' --pdb' if pdb else ''
-    inv.run(f'pytest{pdb} .', pty=True)
+def test_unit(inv, pdb=False, failed=False):
+    pdb = '--pdb' if pdb else ''
+    failed = '--last-failed' if failed else ''  # Only run tests that previously failed
+    inv.run(f'pytest {pdb} {failed} .', pty=True)
 
 
 @task
