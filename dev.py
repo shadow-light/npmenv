@@ -15,8 +15,9 @@ def test_lint(inv):
 
 
 @task
-def test_unit(inv):
-    inv.run('pytest .')
+def test_unit(inv, pdb=False):
+    pdb = ' --pdb' if pdb else ''
+    inv.run(f'pytest{pdb} .', pty=True)
 
 
 @task
