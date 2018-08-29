@@ -62,7 +62,8 @@ def _get_env_dir(proj_dir:Path) -> Path:
 def _resolve_proj_dir(given_proj_dir:Path_or_str=None) -> Path:
     """ Return a resolved Path obj for given project dir (defaulting to CWD)
 
-    WARN Should use for any user-given path to ensure env id consistent
+    Should use for any user-given path to ensure env id consistent
+    WARN Path may not exist (as is the case in `env_rm`)
 
     """
     if given_proj_dir is None:
