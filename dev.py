@@ -1,10 +1,18 @@
 """ Test and release tasks """
 
+import sys
+
 from invoke import task, Program, Collection
 
 
 @task
-def test(inv):
+def test(inv, python=None):
+    if python:
+        # Require a certain version of Python
+        # NOTE Mainly for CI where pyenv silently falls back on diff version
+        python = tuple(python.split('.'))
+        if sys.version_info[:len(python)] != python:
+            raise Exception(f"Python {python} required, but {sys.version_info} used")
     test_lint(inv)
     test_unit(inv)
 
