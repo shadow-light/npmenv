@@ -3,7 +3,7 @@ import os
 import sys
 import subprocess
 from shutil import rmtree
-from typing import Union, Sequence
+from typing import Union, Sequence, Generator
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
@@ -35,7 +35,7 @@ class NpmenvException(Exception):
 
 
 @contextmanager
-def _cd(path:Path_or_str) -> None:
+def _cd(path:Path_or_str) -> Generator:
     """ Temporarily change to a certain dir """
     cwd = Path.cwd()
     os.chdir(path)
