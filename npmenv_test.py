@@ -1,5 +1,6 @@
 
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -58,8 +59,10 @@ def sandbox(request, tmpdir_factory, monkeypatch):
     monkeypatch.chdir(str(proj_dir))
 
     # Provide paths
+    # NOTE pytest will handle cleanup
+    # WARN Can't mix above `return` with a `yield` here, so beware if doing custom cleanup
     env_dir = envs / npmenv._get_env_id(proj_dir)
-    yield {
+    return {
         'envs': envs,
         'proj_dir': proj_dir,
         'proj_package': proj_dir / 'package.json',
@@ -69,9 +72,6 @@ def sandbox(request, tmpdir_factory, monkeypatch):
         'env_lock': env_dir / 'package-lock.json',
         'env_module': env_dir / 'node_modules' / EXAMPLE_PACKAGE,
     }
-
-    # Cleanup
-    # tmpdir_factory and monkeypatch should handle cleanup already
 
 
 @pytest.fixture()
@@ -91,7 +91,7 @@ def fake_project():
     """ Provide paths for a fake project that doesn't override NPMENV_DIR """
     proj_dir = '/tmp/fake'
     env_id = 'fake-SHCEzZKG'
-    yield {
+    return {
         'proj_dir': Path(proj_dir),
         'env_id': env_id,
         'env_dir': Path(Path.home(), '.local/share/npmenv', env_id),
@@ -134,48 +134,52 @@ class TestCli:
 
     """
 
-    def test_env_list(sandbox, monkeypatch, capsys):
+    def _patch_argv(self, monkeypatch, args):
+        """ Patch argv and give dud first arg (script path not used by `_cli()`) """
+        monkeypatch.setattr(sys, 'argv', [None, *args])
+
+    def test_env_list(self, sandbox, monkeypatch, capfd):
         # Trigger env creation
         npmenv.env_npm(['help'])
-        capsys.readouterr()
+        capfd.readouterr()
         # Test
-        monkeypatch.setattr(sys, 'argv', ['env-list'])
+        self._patch_argv(monkeypatch, ['env-list'])
         npmenv._cli()
-        assert str(sandbox['proj_dir']) in capsys.readouterr().out
+        assert str(sandbox['proj_dir']) in capfd.readouterr().out
 
-    def test_env_location(monkeypatch, sandbox, capsys):
-        monkeypatch.setattr(sys, 'argv', ['env-location'])
+    def test_env_location(self, monkeypatch, sandbox, capfd):
+        self._patch_argv(monkeypatch, ['env-location'])
         npmenv._cli()
-        assert str(sandbox['env_dir']) == capsys.readouterr().out
+        assert str(sandbox['env_dir']) == capfd.readouterr().out
 
-    def test_env_rm(monkeypatch):
+    def test_env_rm(self, monkeypatch):
         # Confirm exit if removing env that doesn't exist (also test arg taking)
-        monkeypatch.setattr(sys, 'argv', ['env-rm', '/tmp/fake'])
+        self._patch_argv(monkeypatch, ['env-rm', '/tmp/fake'])
         with pytest.raises(SystemExit):
             npmenv._cli()
         # Confirm no exit if removing env dir that does exist (also test no arg)
         npmenv.env_npm(['help'])
-        monkeypatch.setattr(sys, 'argv', ['env-rm'])
+        self._patch_argv(monkeypatch, ['env-rm'])
         npmenv._cli()
 
-    def test_env_run(monkeypatch):
+    def test_env_run(self, monkeypatch):
         # Just test failure due to env not existing (success case tested elsewhere)
-        monkeypatch.setattr(sys, 'argv', ['env-run', 'node'])
+        self._patch_argv(monkeypatch, ['env-run', 'node'])
         with pytest.raises(SystemExit):
             npmenv._cli()
 
-    def test_npm(monkeypatch, capsys):
+    def test_npm(self, monkeypatch, capfd):
         # Confirm calls npm and adds own help info to npm's
-        monkeypatch.setattr(sys, 'argv', ['help'])
+        self._patch_argv(monkeypatch, ['help'])
         npmenv._cli()
-        stdout = capsys.readouterr().out
+        stdout = capfd.readouterr().out
         assert 'npmenv' in stdout  # Own help text
         assert 'publish' in stdout  # npm's help text
 
-    def test_args(monkeypatch):
+    def test_args(self, monkeypatch):
         # Confirm failure when wrong amount of args
         for args in (['env-list', 0], ['env-location', 0], ['env-run'], ['env-rm', 0, 0]):
-            monkeypatch.setattr(sys, 'argv', args)
+            self._patch_argv(monkeypatch, args)
             with pytest.raises(SystemExit):
                 npmenv._cli()
 
@@ -198,7 +202,6 @@ class TestEnvNpm:
         npmenv.env_npm(['install', EXAMPLE_PACKAGE])
         assert sandbox['proj_lock'].exists()
         assert sandbox['env_lock'].resolve() == sandbox['proj_lock']
-        assert not sandbox['env_package'].is_symlink()
         assert sandbox['env_module'].is_dir()
 
     def test_only_package(self, insert_project_files):
@@ -206,7 +209,7 @@ class TestEnvNpm:
         sandbox = insert_project_files(package=True)
         npmenv.env_npm(['install'])
         # Confirm original file not modified
-        assert sandbox['proj_package'].read_text() == PACKAGE_JSON
+        assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         # Confirm links created
         assert sandbox['env_package'].resolve() == sandbox['proj_package']
         assert sandbox['proj_lock'].exists()
@@ -214,15 +217,16 @@ class TestEnvNpm:
         # Confirm module installed
         assert sandbox['env_module'].is_dir()
 
-    def test_only_lock(self, insert_project_files):
+    def test_both_files(self, insert_project_files):
         """ `env_npm` should use existing package file """
-        sandbox = insert_project_files(lock=True)
-        npmenv.env_npm(['install'])
-        # Confirm original file not modified
-        assert sandbox['proj_lock'].read_text() == LOCK_JSON
+        sandbox = insert_project_files(package=True, lock=True)
+        npmenv.env_npm(['ci'])
+        # Confirm original files not modified
+        assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
+        assert json.loads(sandbox['proj_lock'].read_text()) == json.loads(LOCK_JSON)
         # Confirm links
+        assert sandbox['env_package'].resolve() == sandbox['proj_package']
         assert sandbox['env_lock'].resolve() == sandbox['proj_lock']
-        assert not sandbox['env_package'].is_symlink()
         # Confirm module installed
         assert sandbox['env_module'].is_dir()
 
@@ -237,7 +241,7 @@ class TestEnvNpm:
         sandbox['proj_package'].unlink()
         sandbox['proj_lock'].unlink()
         # Confirm links removed
-        npmenv.env_npm['help']
+        npmenv.env_npm(['help'])
         assert not sandbox['env_package'].is_symlink()
         assert not sandbox['env_lock'].is_symlink()
 
@@ -278,7 +282,7 @@ def test_env_location(sandbox):
     assert env_dir.name.startswith(sandbox['proj_dir'].name + '-')
 
 
-def test_env_run(sandbox, capsys):
+def test_env_run(sandbox, capfd):
     # Confirm exception if no bin dir
     with pytest.raises(npmenv.NpmenvException):
         npmenv.env_run(['node', '--version'])
@@ -287,6 +291,6 @@ def test_env_run(sandbox, capsys):
         npmenv.env_run(['node', '--version'])
     # Confirm runs executable from .bin dir
     npmenv.env_npm(['install', 'node@10.4.1'])  # Specific version to avoid system version
-    capsys.readouterr()
+    capfd.readouterr()
     npmenv.env_run(['node', '--version'])
-    assert 'v10.4.1' in capsys.readouterr().out
+    assert 'v10.4.1' in capfd.readouterr().out
