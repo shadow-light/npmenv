@@ -13,15 +13,17 @@ matrix:
       # NOTE Using TRAVIS_PYTHON_VERSION so same variable name when used in `script`
       - os: osx
         language: generic
-        env: TRAVIS_PYTHON_VERSION="3.6"
+        env: TRAVIS_PYTHON_VERSION="3.6.0"  # NOTE pyenv requires all three parts
       - os: osx
         language: generic
-        env: TRAVIS_PYTHON_VERSION="3.7"
+        env: TRAVIS_PYTHON_VERSION="3.7.0"
 
 before_install: |
     # OSX specific requirements
     if test $TRAVIS_OS_NAME == osx; then
-        brew upgrade pyenv  # Old version doesn't know about Python 3.7
+        if test $TRAVIS_PYTHON_VERSION == "3.7.0"; then
+            brew upgrade pyenv  # Old version doesn't know about Python 3.7
+        fi
         pyenv install $TRAVIS_PYTHON_VERSION  # Install required python version
         pyenv global $TRAVIS_PYTHON_VERSION  # Switch to new version
         sudo npm install --global npm  # Travis' version doesn't support lock files
