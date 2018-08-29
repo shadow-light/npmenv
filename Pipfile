@@ -10,7 +10,7 @@ appdirs = "==1.*, >=1.4.3"
 "flake8" = "*"
 invoke = "*"
 pytest = "*"
-"flake8-mypy" = "*"
+mypy = "*"
 
 [requires]
 python_version = "3.6"
