@@ -1,2 +1,2 @@
 #!/bin/bash
-pipenv run python dev.py "$@"
+pipenv run python dev.py --pty "$@"
