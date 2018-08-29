@@ -12,6 +12,8 @@ def test(inv):
 @task
 def test_lint(inv):
     inv.run('flake8 .')
+    # NOTE mypy separated from flake8 as flake8-mypy was buggy (and no 3.7 support)
+    inv.run('mypy npmenv.py npmenv_test.py')  # Can't use glob
 
 
 @task
