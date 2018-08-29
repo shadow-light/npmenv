@@ -10,18 +10,19 @@ matrix:
       - python: 3.7
         sudo: true
       # OSX doesn't support diff python versions yet so must manually install
+      # NOTE Using TRAVIS_PYTHON_VERSION so same variable name when used in `script`
       - os: osx
         language: generic
-        env: PYTHON="3.6"
+        env: TRAVIS_PYTHON_VERSION="3.6"
       - os: osx
         language: generic
-        env: PYTHON="3.7"
+        env: TRAVIS_PYTHON_VERSION="3.7"
 
 before_install: |
     # OSX specific requirements
     if test $TRAVIS_OS_NAME == osx; then
-        pyenv install $PYTHON  # Install required python version
-        pyenv global $PYTHON  # Switch to new version
+        pyenv install $TRAVIS_PYTHON_VERSION  # Install required python version
+        pyenv global $TRAVIS_PYTHON_VERSION  # Switch to new version
         sudo npm install --global npm  # Travis' version doesn't support lock files
     fi
     # Need pipenv for install
@@ -29,4 +30,4 @@ before_install: |
 
 install: pipenv install --dev
 
-script: pipenv run python dev.py test
+script: pipenv run python dev.py test --python $TRAVIS_PYTHON_VERSION
