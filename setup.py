@@ -1,0 +1,40 @@
+
+from pathlib import Path
+from setuptools import setup
+
+from pipenv.utils import convert_deps_to_pip
+from pipenv.project import Project
+
+from .npmenv import __version__
+
+
+# Access to pipfile
+# NOTE Shouldn't need to chdir (and default is True)
+pipfile = Project(chdir=False).parsed_pipfile
+
+
+setup(
+    # Essentials
+    name='npmenv',
+    version=__version__,
+    packages=['npmenv'],
+
+    # Get dependencies from Pipfile (does not include dev packages)
+    # NOTE `r=False` prevents a requirements file being created and returned
+    install_requires=convert_deps_to_pip(pipfile['packages'], r=False),
+
+    # Support Pipfile version and future minor releases (but not major)
+    python_requires='~={}'.format(pipfile['requires']['python_version']),
+
+    # Auto create platform-specific script to run the CLI
+    entry_points={'console_scripts': ['npmenv = npmenv']},
+
+    # Metadata
+    author='shadow-light',
+    description=("Wrapper for npm that stores node_modules outside of project dir and"
+        " supports per-project node versions."),
+    long_description=Path('README.md').read_text(),
+    long_description_content_type='text/markdown',
+    license='MIT',
+    url='https://github.com/shadow-light/npmenv',
+)
