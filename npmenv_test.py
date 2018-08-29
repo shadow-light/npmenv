@@ -91,10 +91,15 @@ def fake_project():
     """ Provide paths for a fake project that doesn't override NPMENV_DIR """
     proj_dir = '/tmp/fake'
     env_id = 'fake-SHCEzZKG'
+    data_dir = '.local/share'
+    if platform.system() == 'Darwin':
+        data_dir = 'Library/Application Support'
+    if platform.system() == 'Windows':
+        data_dir = 'AppData/Local/shadow-light'
     return {
         'proj_dir': Path(proj_dir),
         'env_id': env_id,
-        'env_dir': Path(Path.home(), '.local/share/npmenv', env_id),
+        'env_dir': Path(Path.home(), data_dir, 'npmenv', env_id),
     }
 
 
