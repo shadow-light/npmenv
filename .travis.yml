@@ -1,0 +1,5 @@
+
+os: [linux, osx]
+before_install: pip install pipenv
+install: pipenv install
+script: pipenv run python dev.py test
