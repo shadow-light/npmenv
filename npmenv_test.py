@@ -199,15 +199,13 @@ class TestEnvNpm:
     def test_no_files_init(self, sandbox):
         """ `env_npm` should transfer new package file created by npm init """
         npmenv.env_npm(['init', '--yes'])
-        assert sandbox['proj_package'].exists()
-        assert sandbox['env_package'].resolve() == sandbox['proj_package']
+        assert sandbox['env_package'].resolve(strict=True) == sandbox['proj_package']
         assert not sandbox['env_lock'].is_symlink()
 
     def test_no_files_install(self, sandbox):
         """ `env_npm` should transfer new lock file created by npm install """
         npmenv.env_npm(['install', EXAMPLE_PACKAGE])
-        assert sandbox['proj_lock'].exists()
-        assert sandbox['env_lock'].resolve() == sandbox['proj_lock']
+        assert sandbox['env_lock'].resolve(strict=True) == sandbox['proj_lock']
         assert sandbox['env_module'].is_dir()
 
     def test_only_package(self, insert_project_files):
@@ -217,9 +215,8 @@ class TestEnvNpm:
         # Confirm original file not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         # Confirm links created
-        assert sandbox['env_package'].resolve() == sandbox['proj_package']
-        assert sandbox['proj_lock'].exists()
-        assert sandbox['env_lock'].resolve() == sandbox['proj_lock']
+        assert sandbox['env_package'].resolve(strict=True) == sandbox['proj_package']
+        assert sandbox['env_lock'].resolve(strict=True) == sandbox['proj_lock']
         # Confirm module installed
         assert sandbox['env_module'].is_dir()
 
