@@ -220,7 +220,7 @@ class TestEnvNpm:
     def test_both_files(self, insert_project_files):
         """ `env_npm` should use existing package file """
         sandbox = insert_project_files(package=True, lock=True)
-        npmenv.env_npm(['ci'])
+        npmenv.env_npm(['install'])
         # Confirm original files not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         assert json.loads(sandbox['proj_lock'].read_text()) == json.loads(LOCK_JSON)
