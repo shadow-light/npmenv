@@ -20,6 +20,7 @@ before_install: |
     if test $TRAVIS_OS_NAME == osx; then
         pyenv install $PYTHON
         pyenv global $PYTHON
+        sudo npm install --global npm
     fi
     python -m pip install pipenv
 
