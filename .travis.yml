@@ -2,11 +2,11 @@
 os: linux
 dist: xenial
 language: python
-python: 3.6
 
 # OSX doesn't support python yet so need to give custom setup via matrix instead
 matrix:
     include:
+      - python: 3.6
       - python: 3.7
         sudo: true
       - os: osx
