@@ -1,5 +1,25 @@
 
-os: [linux, osx]
-before_install: pip install pipenv
-install: pipenv install
+os: linux
+language: python
+python: [3.6, 3.7]
+
+# OSX doesn't support python yet so need to give custom setup via matrix instead
+matrix:
+    include:
+      - os: osx
+        language: generic
+        env: PYTHON="3.6"
+      - os: osx
+        language: generic
+        env: PYTHON="3.7"
+
+before_install: |
+    if test $TRAVIS_OS_NAME == osx; then
+        pyenv install $PYTHON
+        pyenv global $PYTHON
+    fi
+    python -m pip install pipenv
+
+install: pipenv install --dev
+
 script: pipenv run python dev.py test
