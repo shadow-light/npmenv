@@ -8,5 +8,7 @@ install:
     - python -m pip install pipenv
     - pipenv install --dev
 
+build: off
+
 test_script:
     - pipenv run python dev.py test
