@@ -5,10 +5,11 @@ environment:
         - PYTHON: "C:\\Python37-x64"
 
 install:
+    - ps: Install-Product node 10  # Provide access to npm
     - python -m pip install pipenv
     - pipenv install --dev
 
-build: off
+build: false
 
 test_script:
-    - pipenv run python dev.py test
+    - ps: pipenv run python dev.py test --python $env:PYTHON
