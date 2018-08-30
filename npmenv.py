@@ -45,6 +45,12 @@ def _cd(path:Path_or_str) -> Generator:
         os.chdir(cwd)
 
 
+def _run(args, **kwargs):
+    """ Run a command in a shell for cross-platform support """
+    # WARN If shell=False on Windows then must give full path to the executable!
+    return subprocess.run(args, shell=True, **kwargs)
+
+
 def _get_env_id(proj_dir:Path) -> str:
     """ Return env id for the given project dir """
     # WARN Only take Path for arg as hash would change if e.g. trailing newline in str
@@ -148,7 +154,7 @@ def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
 
     # Execute npm in env dir
     with _cd(env_dir):
-        subprocess.run(['npm', *args])
+        _run(['npm', *args])
 
     # If config/lock files have just been created, move to project and symlink
     for pf, ef in ((proj_config, env_config), (proj_lock, env_lock)):
@@ -227,7 +233,7 @@ def env_run(args:Sequence, proj_dir:Path_or_str=None) -> None:
     process_env['PATH'] = str(bin_dir) + os.pathsep + process_env['PATH']
 
     # Run the given args with the modified env
-    subprocess.run(args, env=process_env)
+    _run(args, env=process_env)
 
 
 # EXECUTE
