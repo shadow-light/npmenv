@@ -13,4 +13,4 @@ pytest = "*"
 mypy = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.6"  # For local dev sake; CI's should create venv beforehand
