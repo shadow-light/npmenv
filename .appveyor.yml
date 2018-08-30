@@ -4,13 +4,14 @@ environment:
         - PYTHON: '3.6'
         - PYTHON: '3.7'
 
+# WARN Avoid powershell as it fails if anything written to stderr (even if success)
+#   pip and pipenv do this with warnings etc
 install:
-    # NOTE --disable-pip-version-check needed to prevent unnecessary failure
-    - ps: python -m pip --disable-pip-version-check install pipenv
-    - ps: pipenv --python $env:PYTHON
-    - ps: pipenv install --dev
+    - python -m pip --disable-pip-version-check install pipenv
+    - pipenv --python %PYTHON%
+    - pipenv install --dev
 
 build: false
 
 test_script:
-    - ps: pipenv run python dev.py test --python $env:PYTHON
+    - pipenv run python dev.py test --python %PYTHON%
