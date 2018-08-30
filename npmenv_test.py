@@ -3,6 +3,7 @@ import sys
 import json
 import platform
 from pathlib import Path
+from contextlib import contextmanager
 
 import pytest
 
@@ -28,6 +29,17 @@ LOCK_JSON = '''{
     }
   }
 }'''
+
+
+# UTILS
+
+
+@contextmanager
+def assert_exit_with_success(success):
+    """ Contextmanager for asserting block raises SystemExit with success True/False """
+    with pytest.raises(SystemExit) as exc:
+        yield
+    assert success == (exc.value.code in (None, 0))
 
 
 # FIXTURES
@@ -173,13 +185,14 @@ class TestCli:
     def test_env_run(self, monkeypatch):
         # Just test failure due to env not existing (success case tested elsewhere)
         self._patch_argv(monkeypatch, ['env-run', 'node'])
-        with pytest.raises(SystemExit):
+        with assert_exit_with_success(False):
             npmenv._cli()
 
     def test_npm(self, monkeypatch, capfd):
         # Confirm calls npm and adds own help info to npm's
         self._patch_argv(monkeypatch, ['help'])
-        npmenv._cli()
+        with assert_exit_with_success(True):
+            npmenv._cli()
         stdout = capfd.readouterr().out
         assert 'npmenv' in stdout  # Own help text
         assert 'publish' in stdout  # npm's help text
