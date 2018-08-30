@@ -20,6 +20,9 @@ matrix:
 
 
 before_install: |
+    # Need pipenv for install
+    python -m pip install pipenv
+
     # OSX specific requirements
     if test $TRAVIS_OS_NAME == osx; then
 
@@ -31,20 +34,19 @@ before_install: |
             brew upgrade pyenv
         fi
 
-        # Install required version of Python
-        pyenv install "$TRAVIS_PYTHON_VERSION.0"  # NOTE pyenv requires all three parts
+        # Form version with patch number (pyenv requires all three parts)
+        PYENV_VERSION="$TRAVIS_PYTHON_VERSION.0"
 
-        # Add pyenv's python to PATH so pipenv finds it
-        export PATH="/Users/travis/.pyenv/shims:${PATH}"
+        # Install required version of Python
+        pyenv install $PYENV_VERSION
+
+        # Create env with the specific version
+        # NOTE Linux build already creates a venv with correct version upon startup
+        pipenv --python /Users/travis/.pyenv/versions/$PYENV_VERSION
     fi
 
-    # Need pipenv for install
-    python -m pip install pipenv
 
-
-install: |
-    pipenv --python $TRAVIS_PYTHON_VERSION  # Ignored on Linux as already in correct venv
-    pipenv install --dev
+install: pipenv install --dev
 
 
 script: pipenv run python dev.py test --python $TRAVIS_PYTHON_VERSION
