@@ -295,10 +295,7 @@ def test_env_run(sandbox, capfd):
     with pytest.raises(npmenv.NpmenvException):
         npmenv.env_run('node --version')
     # Confirm runs executable from .bin dir
-    npmenv.env_npm('install node@10.4.1')  # Specific version to avoid system version
+    npmenv.env_npm('install "node@10.4.1"')  # Specific version to avoid system version
     capfd.readouterr()
-    npmenv._shell('dir /ad /b /s')
-    npmenv._shell('dir /a-d /b /s')
-    print(capfd.readouterr().out)
     npmenv.env_run('node --version')
     assert 'v10.4.1' in capfd.readouterr().out
