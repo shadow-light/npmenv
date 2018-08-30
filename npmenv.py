@@ -1,6 +1,7 @@
 
 import os
 import sys
+import shlex
 import subprocess
 from shutil import rmtree
 from typing import Union, Sequence, Generator
@@ -45,10 +46,15 @@ def _cd(path:Path_or_str) -> Generator:
         os.chdir(cwd)
 
 
-def _run(args, **kwargs):
+def _shell(args:str, **kwargs) -> subprocess.CompletedProcess:
     """ Run a command in a shell for cross-platform support """
     # WARN If shell=False on Windows then must give full path to the executable!
     return subprocess.run(args, shell=True, **kwargs)
+
+
+def _args_to_str(args:Sequence) -> str:
+    """ Take list of args and return string that can safely be executed """
+    return ' '.join([shlex.quote(arg) for arg in args])
 
 
 def _get_env_id(proj_dir:Path) -> str:
@@ -79,10 +85,11 @@ def _resolve_proj_dir(given_proj_dir:Path_or_str=None) -> Path:
 
 def _cli() -> None:
     """ Process argv and wrap npm or execute custom command """
-    cmd = sys.argv[1]
+    cmd = None if len(sys.argv) == 1 else sys.argv[1]
+    env_args = sys.argv[2:]
 
     # Special case: help command prints npmenv commands and then hands over to npm
-    if cmd in ('help', '--help', '-h'):
+    if cmd in (None, 'help', '--help', '-h'):
         help = (
             f"npmenv {__version__}",
             "env-list            List all currently existing environments",
@@ -96,26 +103,26 @@ def _cli() -> None:
     # Run npmenv commands, otherwise handing over to npm
     try:
         if cmd == 'env-list':
-            if len(sys.argv) > 2:
+            if env_args:
                 sys.exit("env-list doesn't take any arguments")
             for env_id, proj_dir in env_list():
                 print(f'{env_id}: {proj_dir}')
         elif cmd == 'env-location':
-            if len(sys.argv) > 2:
+            if env_args:
                 sys.exit("env-location doesn't take any arguments")
             # NOTE No trailing newline so scripts can use without needing to strip
             print(env_location(), end='')
         elif cmd == 'env-run':
-            if len(sys.argv) < 3:
+            if not env_args:
                 sys.exit("env-run requires a command to be given")
-            env_run(sys.argv[2:])
+            env_run(_args_to_str(env_args))
         elif cmd == 'env-rm':
-            if len(sys.argv) > 3:
+            if len(env_args) > 1:
                 sys.exit("env-rm was given too many arguments")
-            proj_dir = env_rm(None if len(sys.argv) < 3 else sys.argv[2])
+            proj_dir = env_rm(*env_args)
             print(f"Removed environment for {proj_dir}")
         else:
-            env_npm(sys.argv[1:])
+            env_npm(_args_to_str(sys.argv[1:]))
     except NpmenvException as exc:
         sys.exit(exc)
 
@@ -123,7 +130,7 @@ def _cli() -> None:
 # PUBLIC
 
 
-def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
+def env_npm(args:str, proj_dir:Path_or_str=None) -> None:
     """ Execute npm with given args in env dir of given project dir """
 
     # Determine paths
@@ -154,7 +161,7 @@ def env_npm(args:Sequence, proj_dir:Path_or_str=None) -> None:
 
     # Execute npm in env dir
     with _cd(env_dir):
-        _run(['npm', *args])
+        _shell(f'npm {args}')
 
     # If config/lock files have just been created, move to project and symlink
     for pf, ef in ((proj_config, env_config), (proj_lock, env_lock)):
@@ -210,7 +217,7 @@ def env_location(proj_dir:Path_or_str=None) -> Path:
     return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
-def env_run(args:Sequence, proj_dir:Path_or_str=None) -> None:
+def env_run(args:str, proj_dir:Path_or_str=None) -> None:
     """ Run a command with node_modules/.bin at start of PATH environment variable
 
     NOTE If node is installed as a package then it should be used to run scripts
@@ -233,7 +240,7 @@ def env_run(args:Sequence, proj_dir:Path_or_str=None) -> None:
     process_env['PATH'] = str(bin_dir) + os.pathsep + process_env['PATH']
 
     # Run the given args with the modified env
-    _run(args, env=process_env)
+    _shell(args, env=process_env)
 
 
 # EXECUTE
