@@ -115,14 +115,18 @@ def _cli() -> None:
         elif cmd == 'env-run':
             if not env_args:
                 sys.exit("env-run requires a command to be given")
-            env_run(_args_to_str(env_args))
+            result = env_run(_args_to_str(env_args))
+            # Reflect return code of subprocess in own exit
+            sys.exit(result.returncode)
         elif cmd == 'env-rm':
             if len(env_args) > 1:
                 sys.exit("env-rm was given too many arguments")
             proj_dir = env_rm(*env_args)
             print(f"Removed environment for {proj_dir}")
         else:
-            env_npm(_args_to_str(sys.argv[1:]))
+            result = env_npm(_args_to_str(sys.argv[1:]))
+            # Reflect return code of subprocess in own exit
+            sys.exit(result.returncode)
     except NpmenvException as exc:
         sys.exit(exc)
 
@@ -130,7 +134,7 @@ def _cli() -> None:
 # PUBLIC
 
 
-def env_npm(args:str, proj_dir:Path_or_str=None) -> None:
+def env_npm(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
     """ Execute npm with given args in env dir of given project dir """
 
     # Determine paths
@@ -161,13 +165,16 @@ def env_npm(args:str, proj_dir:Path_or_str=None) -> None:
 
     # Execute npm in env dir
     with _cd(env_dir):
-        _shell(f'npm {args}')
+        result = _shell(f'npm {args}')
 
     # If config/lock files have just been created, move to project and symlink
     for pf, ef in ((proj_config, env_config), (proj_lock, env_lock)):
         if not pf.exists() and ef.exists():
             ef.rename(target=pf)
             ef.symlink_to(pf)
+
+    # Return result of subprocess
+    return result
 
 
 def env_rm(identifier:Path_or_str=None) -> str:
@@ -217,7 +224,7 @@ def env_location(proj_dir:Path_or_str=None) -> Path:
     return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
-def env_run(args:str, proj_dir:Path_or_str=None) -> None:
+def env_run(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
     """ Run a command with node_modules/.bin at start of PATH environment variable
 
     NOTE If node is installed as a package then it should be used to run scripts
@@ -240,7 +247,7 @@ def env_run(args:str, proj_dir:Path_or_str=None) -> None:
     process_env['PATH'] = str(bin_dir) + os.pathsep + process_env['PATH']
 
     # Run the given args with the modified env
-    _shell(args, env=process_env)
+    return _shell(args, env=process_env)
 
 
 # EXECUTE
