@@ -42,7 +42,7 @@ before_install: |
 
         # Create env with the specific version
         # NOTE Linux build already creates a venv with correct version upon startup
-        pipenv --python /Users/travis/.pyenv/versions/$PYENV_VERSION
+        pipenv --python /Users/travis/.pyenv/versions/$PYENV_VERSION/bin/python
     fi
 
 
