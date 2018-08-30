@@ -213,20 +213,20 @@ class TestEnvNpm:
 
     def test_no_files_init(self, sandbox):
         """ `env_npm` should transfer new package file created by npm init """
-        npmenv.env_npm('init --yes')
+        npmenv.env_npm('init --yes').check_returncode()
         assert sandbox['env_package'].resolve(strict=True) == sandbox['proj_package']
         assert not sandbox['env_lock'].is_symlink()
 
     def test_no_files_install(self, sandbox):
         """ `env_npm` should transfer new lock file created by npm install """
-        npmenv.env_npm(f'install {EXAMPLE_PACKAGE}')
+        npmenv.env_npm(f'install {EXAMPLE_PACKAGE}').check_returncode()
         assert sandbox['env_lock'].resolve(strict=True) == sandbox['proj_lock']
         assert sandbox['env_module'].is_dir()
 
     def test_only_package(self, insert_project_files):
         """ `env_npm` should use existing package file """
         sandbox = insert_project_files(package=True)
-        npmenv.env_npm('install')
+        npmenv.env_npm('install').check_returncode()
         # Confirm original file not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         # Confirm links created
@@ -238,7 +238,7 @@ class TestEnvNpm:
     def test_both_files(self, insert_project_files):
         """ `env_npm` should use existing package file """
         sandbox = insert_project_files(package=True, lock=True)
-        npmenv.env_npm('install')
+        npmenv.env_npm('install').check_returncode()
         # Confirm original files not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         assert json.loads(sandbox['proj_lock'].read_text()) == json.loads(LOCK_JSON)
@@ -303,13 +303,13 @@ def test_env_location(sandbox):
 def test_env_run(sandbox, capfd):
     # Confirm exception if no bin dir
     with pytest.raises(npmenv.NpmenvException):
-        npmenv.env_run('node --version')
+        npmenv.env_run('username --help')
     npmenv.env_npm('help')
     with pytest.raises(npmenv.NpmenvException):
-        npmenv.env_run('node --version')
+        npmenv.env_run('username --help')
     # Confirm runs executable from .bin dir
-    result = npmenv.env_npm('install "node@10.4.1"')  # Specific version to avoid system
-    result.check_returncode()
+    # Install a tiny CLI program that shouldn't exist on system yet
+    npmenv.env_npm('install "username-cli@2.0.0"').check_returncode()
     capfd.readouterr()
-    npmenv.env_run('node --version')
-    assert 'v10.4.1' in capfd.readouterr().out
+    npmenv.env_run('username --help').check_returncode()
+    assert 'sindresorhus' in capfd.readouterr().out
