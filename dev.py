@@ -28,7 +28,7 @@ def test_lint(inv):
 def test_unit(inv, pdb=False, failed=False):
     pdb = '--pdb' if pdb else ''
     failed = '--last-failed' if failed else ''  # Only run tests that previously failed
-    inv.run(f'pytest {pdb} {failed} .')
+    inv.run(f'pytest -s {pdb} {failed} .')
 
 
 @task
