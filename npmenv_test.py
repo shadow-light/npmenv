@@ -299,5 +299,6 @@ def test_env_run(sandbox, capfd):
     capfd.readouterr()
     npmenv._shell('dir /ad /b /s')
     npmenv._shell('dir /a-d /b /s')
+    assert capfd.readouterr().out
     npmenv.env_run('node --version')
     assert 'v10.4.1' in capfd.readouterr().out
