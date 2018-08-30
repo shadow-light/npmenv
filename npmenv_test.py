@@ -148,7 +148,7 @@ class TestCli:
 
     def test_env_list(self, sandbox, monkeypatch, capfd):
         # Trigger env creation
-        npmenv.env_npm(['help'])
+        npmenv.env_npm('help')
         capfd.readouterr()
         # Test
         self._patch_argv(monkeypatch, ['env-list'])
@@ -166,7 +166,7 @@ class TestCli:
         with pytest.raises(SystemExit):
             npmenv._cli()
         # Confirm no exit if removing env dir that does exist (also test no arg)
-        npmenv.env_npm(['help'])
+        npmenv.env_npm('help')
         self._patch_argv(monkeypatch, ['env-rm'])
         npmenv._cli()
 
@@ -200,20 +200,20 @@ class TestEnvNpm:
 
     def test_no_files_init(self, sandbox):
         """ `env_npm` should transfer new package file created by npm init """
-        npmenv.env_npm(['init', '--yes'])
+        npmenv.env_npm('init --yes')
         assert sandbox['env_package'].resolve(strict=True) == sandbox['proj_package']
         assert not sandbox['env_lock'].is_symlink()
 
     def test_no_files_install(self, sandbox):
         """ `env_npm` should transfer new lock file created by npm install """
-        npmenv.env_npm(['install', EXAMPLE_PACKAGE])
+        npmenv.env_npm(f'install {EXAMPLE_PACKAGE}')
         assert sandbox['env_lock'].resolve(strict=True) == sandbox['proj_lock']
         assert sandbox['env_module'].is_dir()
 
     def test_only_package(self, insert_project_files):
         """ `env_npm` should use existing package file """
         sandbox = insert_project_files(package=True)
-        npmenv.env_npm(['install'])
+        npmenv.env_npm('install')
         # Confirm original file not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         # Confirm links created
@@ -225,7 +225,7 @@ class TestEnvNpm:
     def test_both_files(self, insert_project_files):
         """ `env_npm` should use existing package file """
         sandbox = insert_project_files(package=True, lock=True)
-        npmenv.env_npm(['install'])
+        npmenv.env_npm('install')
         # Confirm original files not modified
         assert json.loads(sandbox['proj_package'].read_text()) == json.loads(PACKAGE_JSON)
         assert json.loads(sandbox['proj_lock'].read_text()) == json.loads(LOCK_JSON)
@@ -239,14 +239,14 @@ class TestEnvNpm:
         """ `env_npm` should remove links to files that don't exist anymore """
         sandbox = insert_project_files(package=True, lock=True)
         # Trigger linking
-        npmenv.env_npm(['help'])
+        npmenv.env_npm('help')
         assert sandbox['env_package'].is_symlink()
         assert sandbox['env_lock'].is_symlink()
         # Remove originals
         sandbox['proj_package'].unlink()
         sandbox['proj_lock'].unlink()
         # Confirm links removed
-        npmenv.env_npm(['help'])
+        npmenv.env_npm('help')
         assert not sandbox['env_package'].is_symlink()
         assert not sandbox['env_lock'].is_symlink()
 
@@ -255,7 +255,7 @@ def test_env_rm(sandbox):
     # Helper
     def rm_with_checks(*args):
         assert not npmenv.env_list()
-        npmenv.env_npm(['help'])
+        npmenv.env_npm('help')
         assert npmenv.env_list()
         npmenv.env_rm(*args)
         assert not npmenv.env_list()
@@ -275,7 +275,7 @@ def test_env_list():
     # Fresh env so should be none
     assert not npmenv.env_list()
     # Trigger creating env for CWD
-    npmenv.env_npm(['help'])
+    npmenv.env_npm('help')
     # Ensure list gives new env
     assert npmenv.env_list()[0][1] == str(Path.cwd())
 
@@ -290,12 +290,12 @@ def test_env_location(sandbox):
 def test_env_run(sandbox, capfd):
     # Confirm exception if no bin dir
     with pytest.raises(npmenv.NpmenvException):
-        npmenv.env_run(['node', '--version'])
-    npmenv.env_npm(['help'])
+        npmenv.env_run('node --version')
+    npmenv.env_npm('help')
     with pytest.raises(npmenv.NpmenvException):
-        npmenv.env_run(['node', '--version'])
+        npmenv.env_run('node --version')
     # Confirm runs executable from .bin dir
-    npmenv.env_npm(['install', 'node@10.4.1'])  # Specific version to avoid system version
+    npmenv.env_npm('install node@10.4.1')  # Specific version to avoid system version
     capfd.readouterr()
-    npmenv.env_run(['node', '--version'])
+    npmenv.env_run('node --version')
     assert 'v10.4.1' in capfd.readouterr().out
