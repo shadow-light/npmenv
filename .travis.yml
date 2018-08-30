@@ -3,12 +3,12 @@ os: linux
 dist: xenial
 language: python
 
+
 matrix:
     include:
       - python: '3.6'
-      # 3.7 requires sudo for some reason
       - python: '3.7'
-        sudo: true
+        sudo: true  # 3.7 requires sudo for some reason
       # OSX doesn't support diff python versions yet so must manually install
       # NOTE Using TRAVIS_PYTHON_VERSION so same variable name when used in `script`
       - os: osx
@@ -18,21 +18,34 @@ matrix:
         language: generic
         env: TRAVIS_PYTHON_VERSION="3.7.0"
 
+
 before_install: |
+
     # OSX specific requirements
     if test $TRAVIS_OS_NAME == osx; then
+
+        # Upgrade npm as Travis' version doesn't support lock files
+        sudo npm install --global npm
+
+        # Upgrade pyenv for Python 3.7 as installed version doesn't know about it
         if test $TRAVIS_PYTHON_VERSION == "3.7.0"; then
-            brew upgrade pyenv  # Old version doesn't know about Python 3.7
+            brew upgrade pyenv
         fi
-        pyenv install $TRAVIS_PYTHON_VERSION  # Install required python version
-        pyenv global $TRAVIS_PYTHON_VERSION  # Switch to new version
-        sudo npm install --global npm  # Travis' version doesn't support lock files
+
+        # Install required version of Python
+        pyenv install $TRAVIS_PYTHON_VERSION
+
+        # Add pyenv's python to PATH so pipenv finds it
+        export PATH="/Users/travis/.pyenv/shims:${PATH}"
     fi
+
     # Need pipenv for install
     python -m pip install pipenv
 
+
 install: |
-    pipenv --python $TRAVIS_PYTHON_VERSION
+    pipenv --python $TRAVIS_PYTHON_VERSION  # Ignored on Linux as already in correct venv
     pipenv install --dev
+
 
 script: pipenv run python dev.py test --python $TRAVIS_PYTHON_VERSION
