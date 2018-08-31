@@ -22,7 +22,7 @@ Path_or_str = Union[Path, str]
 # MODULE LEVEL
 
 
-__version__ = 'dev'
+__version__ = 'source'  # Replaced when packaged
 
 
 NPMENV_DIR = Path(user_data_dir('npmenv', 'shadow-light'))
