@@ -96,37 +96,56 @@ def _cli() -> None:
             "env-location        Output path to env for current dir (may not exist yet)",
             "env-run cmd [args]  Run command with env's bin dir in start of PATH",
             "env-rm [env_id]     Remove the env for current dir (or env with given id)",
+            "env-cleanup         Remove envs for projects that no longer exist",
             "----------",
         )
         print('\n'.join(help) + '\n')
 
+    # Helper for issues
+    def issue_to_str(issue):
+        if issue == 'missing':
+            return '(no longer exists)'
+        if issue == 'no_config':
+            return '(no package.json or lock)'
+        return issue or ''
+
+    # Exit if args given to argless commands
+    if cmd in ('env-list', 'env-cleanup', 'env-location') and env_args:
+        sys.exit(f"{cmd} doesn't take any arguments")
+
     # Run npmenv commands, otherwise handing over to npm
     try:
         if cmd == 'env-list':
-            if env_args:
-                sys.exit("env-list doesn't take any arguments")
-            for env_id, proj_dir in env_list():
-                print(f'{env_id}: {proj_dir}')
+            for env_id, proj_dir, issue in env_list():
+                print(f'{env_id}: {proj_dir} {issue_to_str(issue)}')
+
+        elif cmd == 'env-cleanup':
+            print("The following environments have been removed:")
+            for env_id, proj_dir, issue in env_cleanup():
+                print(f'{env_id}: {proj_dir} {issue_to_str(issue)}')
+
         elif cmd == 'env-location':
-            if env_args:
-                sys.exit("env-location doesn't take any arguments")
             # NOTE No trailing newline so scripts can use without needing to strip
             print(env_location(), end='')
+
         elif cmd == 'env-run':
             if not env_args:
                 sys.exit("env-run requires a command to be given")
             result = env_run(_args_to_str(env_args))
             # Reflect return code of subprocess in own exit
             sys.exit(result.returncode)
+
         elif cmd == 'env-rm':
             if len(env_args) > 1:
                 sys.exit("env-rm was given too many arguments")
             proj_dir = env_rm(*env_args)
             print(f"Removed environment for {proj_dir}")
+
         else:
             result = env_npm(_args_to_str(sys.argv[1:]))
             # Reflect return code of subprocess in own exit
             sys.exit(result.returncode)
+
     except NpmenvException as exc:
         sys.exit(exc)
 
@@ -204,6 +223,16 @@ def env_rm(identifier:Path_or_str=None) -> str:
     return proj_dir
 
 
+def env_cleanup() -> list:
+    """ Remove envs for projects that no longer exist (no package or lock file) """
+    removed = []
+    for env_id, env_dir, issue in env_list():
+        if issue:
+            env_rm(env_id)
+            removed.append((env_id, env_dir, issue))
+    return removed
+
+
 def env_list() -> list:
     """ Return list of npmenv ids and their corresponding project dirs """
     envs = []
@@ -211,7 +240,18 @@ def env_list() -> list:
         # NOTE Ignores any files or dirs that don't have a .project file
         path_file = item.joinpath('.project')
         if path_file.is_file():
-            envs.append((item.name, path_file.read_text()))
+            # Determine paths from path file
+            proj_dir = Path(path_file.read_text())
+            proj_config = proj_dir.joinpath('package.json')
+            proj_lock = proj_dir.joinpath('package-lock.json')
+            # Also return if any issue with project
+            issue = None
+            if not proj_dir.is_dir():
+                issue = 'missing'
+            if not any(proj_config.is_file(), proj_lock.is_file()):
+                issue = 'no_config'
+            # Add to list
+            envs.append((item.name, proj_dir, issue))
     return envs
 
 
