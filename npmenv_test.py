@@ -167,6 +167,19 @@ class TestCli:
         npmenv._cli()
         assert str(sandbox['proj_dir']) in capfd.readouterr().out
 
+    def test_env_cleanup(self, monkeypatch, sandbox, insert_project_files, tmpdir):
+        # Test two projects, only one having config files
+        proj1 = str(sandbox['proj_dir'])
+        proj2 = str(tmpdir)
+        insert_project_files(package=True)  # Into proj1 (sandbox)
+        npmenv.env_npm(proj_dir=proj1)
+        npmenv.env_npm(proj_dir=proj2)
+        self._patch_argv(monkeypatch, ['env-cleanup'])
+        npmenv._cli()
+        stdout = capfd.readouterr().out
+        assert proj1 not in stdout
+        assert proj2 in stdout
+
     def test_env_location(self, monkeypatch, sandbox, capfd):
         self._patch_argv(monkeypatch, ['env-location'])
         npmenv._cli()
@@ -291,6 +304,31 @@ def test_env_list():
     npmenv.env_npm('help')
     # Ensure list gives new env
     assert npmenv.env_list()[0][1] == str(Path.cwd())
+
+
+def test_env_cleanup(sandbox, insert_project_files, tmpdir_factory):
+    # Put lock file in sandbox project
+    insert_project_files(lock=True)
+    npmenv.env_npm()
+
+    # Create additional project with no config
+    npmenv.env_npm(proj_dir=str(tmpdir_factory.mktemp()))
+
+    # Create additional project and then delete
+    proj3 = Path(str(tmpdir_factory.mktemp()))
+    npmenv.env_npm(proj_dir=proj3)
+    proj3.rmdir()
+
+    # Confirm issues
+    issues = sorted([env[2] for env in env_list()])
+    assert issues == [None, 'missing', 'no_config']
+
+    # Remove envs with issues
+    removed = env_cleanup()
+
+    # Confirm only removed envs with issues
+    assert len(removed) == 2
+    assert None not in (env[2] for env in removed)
 
 
 def test_env_location(sandbox):
