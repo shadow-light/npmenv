@@ -36,12 +36,13 @@ class NpmenvException(Exception):
 
 
 @contextmanager
-def _cd(path:Path_or_str) -> Generator:
+def _cd(path:Path_or_str) -> Generator[Path, None, None]:
     """ Temporarily change to a certain dir """
+    path = Path(path)
     cwd = Path.cwd()
     os.chdir(path)
     try:
-        yield
+        yield path
     finally:
         os.chdir(cwd)
 
