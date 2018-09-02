@@ -154,7 +154,7 @@ def _cli() -> None:
 # PUBLIC
 
 
-def env_npm(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
+def env_npm(args:str='', proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
     """ Execute npm with given args in env dir of given project dir """
 
     # Determine paths
