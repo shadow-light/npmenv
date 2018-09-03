@@ -12,6 +12,7 @@ invoke = "*"
 pytest = "*"
 mypy = "*"
 twine = "*"
+pipenv = "*"
 
 [requires]
 python_version = "3.6"  # For local dev sake; CI's should create venv beforehand
