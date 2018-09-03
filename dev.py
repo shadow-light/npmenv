@@ -65,7 +65,7 @@ def _set_version_in_module(version):
     original = path.read_text()
     version_line_old = "__version__ = 'source'"
     version_line_new = f"__version__ = '{version}'"
-    versioned = original.replace(version_line_old, version_line_new, count=1)
+    versioned = original.replace(version_line_old, version_line_new, 1)
     assert version_line_new in versioned
     path.write_text(versioned)
     yield
