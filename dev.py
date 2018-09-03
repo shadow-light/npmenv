@@ -3,6 +3,8 @@
 import os
 import sys
 import json
+import pydoc
+import inspect
 from uuid import uuid4
 from urllib import request
 from pathlib import Path
@@ -14,6 +16,30 @@ from invoke import task, Program, Collection
 
 
 # UTILS
+
+
+def _api_doc():
+    """ Return auto-generated API documentation """
+    doc = []
+    import npmenv
+    for name, value in inspect.getmembers(npmenv):
+        # Skip any builtin or imported members
+        # NOTE This also ignores anything without a __module__ attribute (e.g. variables)
+        if getattr(value, '__module__', None) != 'npmenv':
+            continue
+        # Skip any private members
+        if name.startswith('_'):
+            continue
+        # Print only the docstring for the exception (rather than all methods)
+        if name == 'NpmenvException':
+            exc_doc = value.__doc__.strip()
+            doc.append(f'class NpmenvException(builtins.Exception)\n    {exc_doc}\n')
+            continue
+        # Hand rendering over to pydoc
+        doc.append(pydoc.plaintext.document(value))
+
+    # Return as a string
+    return '\n'.join(doc)
 
 
 def _get_ci_status(commit):
@@ -96,9 +122,10 @@ def test(inv, python=None):
 @task
 def test_lint(inv):
     """ Run lint and type tests """
-    inv.run('flake8 .')
     # NOTE mypy separated from flake8 as flake8-mypy was buggy (and no 3.7 support)
-    inv.run('mypy npmenv.py npmenv_test.py')  # Can't use glob
+    inv.run('flake8 .')
+    for file in Path().glob('**/*.py'):  # Mypy doesn't support globbing
+        inv.run(f'mypy {file}')
 
 
 @task
@@ -107,6 +134,12 @@ def test_unit(inv, pdb=False, failed=False):
     pdb = '--pdb' if pdb else ''
     failed = '--last-failed' if failed else ''  # Only run tests that previously failed
     inv.run(f'pytest {pdb} {failed} .')
+
+
+@task
+def api(inv):
+    """ Print documentation for npmenv's API """
+    print(_api_doc())
 
 
 @task
@@ -238,6 +271,6 @@ def release(inv):
 # CLI
 
 
-program = Program('source', Collection(test, test_lint, test_unit, package, release))
+program = Program('source', Collection(test, test_lint, test_unit, api, package, release))
 if __name__ == '__main__':
     program.run()
