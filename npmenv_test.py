@@ -160,7 +160,7 @@ class TestCli:
 
     def test_env_list(self, sandbox, monkeypatch, capfd):
         # Trigger env creation
-        npmenv.env_npm('help')
+        npmenv.env_npm()
         capfd.readouterr()
         # Test
         self._patch_argv(monkeypatch, ['env-list'])
@@ -191,7 +191,7 @@ class TestCli:
         with pytest.raises(SystemExit):
             npmenv._cli()
         # Confirm no exit if removing env dir that does exist (also test no arg)
-        npmenv.env_npm('help')
+        npmenv.env_npm()
         self._patch_argv(monkeypatch, ['env-rm'])
         npmenv._cli()
 
@@ -265,14 +265,14 @@ class TestEnvNpm:
         """ `env_npm` should remove links to files that don't exist anymore """
         sandbox = insert_project_files(package=True, lock=True)
         # Trigger linking
-        npmenv.env_npm('help')
+        npmenv.env_npm()
         assert sandbox['env_package'].is_symlink()
         assert sandbox['env_lock'].is_symlink()
         # Remove originals
         sandbox['proj_package'].unlink()
         sandbox['proj_lock'].unlink()
         # Confirm links removed
-        npmenv.env_npm('help')
+        npmenv.env_npm()
         assert not sandbox['env_package'].is_symlink()
         assert not sandbox['env_lock'].is_symlink()
 
@@ -281,7 +281,7 @@ def test_env_rm(sandbox):
     # Helper
     def rm_with_checks(*args):
         assert not npmenv.env_list()
-        npmenv.env_npm('help')
+        npmenv.env_npm()
         assert npmenv.env_list()
         npmenv.env_rm(*args)
         assert not npmenv.env_list()
@@ -301,7 +301,7 @@ def test_env_list():
     # Fresh env so should be none
     assert not npmenv.env_list()
     # Trigger creating env for CWD
-    npmenv.env_npm('help')
+    npmenv.env_npm()
     # Ensure list gives new env
     assert npmenv.env_list()[0][1] == Path.cwd()
 
@@ -342,7 +342,7 @@ def test_env_run(sandbox, capfd):
     # Confirm exception if no bin dir
     with pytest.raises(npmenv.NpmenvException):
         npmenv.env_run('username --help')
-    npmenv.env_npm('help')
+    npmenv.env_npm()
     with pytest.raises(npmenv.NpmenvException):
         npmenv.env_run('username --help')
     # Confirm runs executable from .bin dir
