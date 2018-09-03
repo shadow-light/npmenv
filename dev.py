@@ -114,12 +114,27 @@ def package(inv, version=None):
     if not version:
         version = inv.run('git describe --always --dirty').stdout.strip()
 
-    # Put version in env so setup.py can access it
-    os.environ['NPMENV_VERSION'] = version
+    # Modify env of setup.py
+    env_override = {
+        # Pass version to setup.py via env
+        'NPMENV_VERSION': version,
+        # Undo pipenv preventing pyc file creation
+        # NOTE Will be removed later, see https://github.com/pypa/pipenv/blob/417f0dfdcdcc36b0e44d23e1c226ac21ce016823/pipenv/environments.py#L8
+        'PYTHONDONTWRITEBYTECODE': '',
+    }
+
+    # Remove old files
+    for file in Path('dist').iterdir():
+        if file.suffix in ('.whl', '.gz'):
+            file.unlink()
+    assert len(list(Path('dist').iterdir())) == 0
 
     # Set the version in actual module, package, then unset it
     with _set_version_in_module(version):
-        inv.run('python setup.py sdist bdist_wheel')
+        inv.run('python setup.py sdist bdist_wheel', env=env_override)
+
+    # Confirm expected packages created
+    assert len(list(Path('dist').iterdir())) == 2
 
 
 @task
@@ -161,12 +176,7 @@ def release(inv):
     version = _get_new_version(last_version)
 
     # Produce packages
-    for file in Path('dist').iterdir():
-        if file.suffix in ('.whl', '.gz'):
-            file.unlink()
-    assert len(list(Path('dist').iterdir())) == 0
     package(inv, version)
-    assert len(list(Path('dist').iterdir())) == 2
 
     # Upload to test pypi
     twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
