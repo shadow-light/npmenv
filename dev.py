@@ -119,7 +119,7 @@ def package(inv, version=None):
         # Pass version to setup.py via env
         'NPMENV_VERSION': version,
         # Undo pipenv preventing pyc file creation
-        # NOTE Will be removed later, see https://github.com/pypa/pipenv/blob/417f0dfdcdcc36b0e44d23e1c226ac21ce016823/pipenv/environments.py#L8
+        # NOTE Will be removed later, see https://git.io/fA8fl
         'PYTHONDONTWRITEBYTECODE': '',
     }
 
