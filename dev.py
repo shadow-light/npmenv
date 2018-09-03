@@ -68,8 +68,10 @@ def _set_version_in_module(version):
     versioned = original.replace(version_line_old, version_line_new, 1)
     assert version_line_new in versioned
     path.write_text(versioned)
-    yield
-    path.write_text(original)
+    try:
+        yield
+    finally:
+        path.write_text(original)
 
 
 # TASKS
