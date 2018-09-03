@@ -1,4 +1,4 @@
-""" Test and release tasks """
+""" Development tasks """
 
 import os
 import sys
@@ -18,10 +18,22 @@ from invoke import task, Program, Collection
 # UTILS
 
 
-def _api_doc():
-    """ Return auto-generated API documentation """
-    doc = []
+def _documentation():
+    """ Return auto-generated documentation in Markdown """
+
+    # Start with README.md
+    doc = Path('README.md').read_text() + '\n\n'
+
+    # Rename link name for PyPI (as misleading when viewed on PyPI itself)
+    assert doc.count('[Documentation]') == 1
+    doc = doc.replace('[Documentation]', '[PyPI package]')
+
+    # Add help text
     import npmenv
+    doc += f"## CLI usage\n```{npmenv.HELP}```\n\n\n"
+
+    # Add API documentation
+    doc += "## Module API\n```"
     for name, value in inspect.getmembers(npmenv):
         # Skip any builtin or imported members
         # NOTE This also ignores anything without a __module__ attribute (e.g. variables)
@@ -33,13 +45,16 @@ def _api_doc():
         # Print only the docstring for the exception (rather than all methods)
         if name == 'NpmenvException':
             exc_doc = value.__doc__.strip()
-            doc.append(f'class NpmenvException(builtins.Exception)\n    {exc_doc}\n')
+            doc += f'class NpmenvException(builtins.Exception)\n    {exc_doc}\n\n'
             continue
         # Hand rendering over to pydoc
-        doc.append(pydoc.plaintext.document(value))
+        doc += pydoc.plaintext.document(value) + '\n'
 
-    # Return as a string
-    return '\n'.join(doc)
+    # Close doc block
+    doc += '```\n'
+
+    # Done
+    return doc
 
 
 def _get_ci_status(commit):
@@ -137,9 +152,9 @@ def test_unit(inv, pdb=False, failed=False):
 
 
 @task
-def api(inv):
-    """ Print documentation for npmenv's API """
-    print(_api_doc())
+def doc(inv):
+    """ Print documentation """
+    print(_documentation())
 
 
 @task
@@ -271,6 +286,6 @@ def release(inv):
 # CLI
 
 
-program = Program('source', Collection(test, test_lint, test_unit, api, package, release))
+program = Program('source', Collection(test, test_lint, test_unit, doc, package, release))
 if __name__ == '__main__':
     program.run()
