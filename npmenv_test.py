@@ -109,7 +109,6 @@ def fake_project():
         data_dir = 'Library/Application Support'
     if platform.system() == 'Windows':
         proj_dir = 'C:' + proj_dir
-        env_id = 'TEMP__fake__60Sq7Ynp'
         data_dir = 'AppData/Local/shadow-light'
     return {
         'proj_dir': Path(proj_dir),
