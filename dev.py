@@ -133,6 +133,10 @@ def package(inv, version=None):
     with _set_version_in_module(version):
         inv.run('python setup.py sdist bdist_wheel', env=env_override)
 
+    # Cleanup tmp files created by setup.py
+    inv.run('python setup.py clean --all', env=env_override)
+    inv.run('rm -R npmenv.egg-info')
+
     # Confirm expected packages created
     assert len(list(Path('dist').iterdir())) == 2
 
