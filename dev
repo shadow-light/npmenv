@@ -1,2 +1,3 @@
-#!/bin/bash
+#!/bin/sh
+# Linux only script for executing development tasks
 pipenv run python dev.py --pty "$@"
