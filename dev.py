@@ -198,12 +198,12 @@ def release(inv):
     path_without_venv = os.pathsep.join(path_without_venv)
 
     # Helper for running pipenv commands in sub env
-    sub_env = {
-        'PATH': path_without_venv,
-        'PIP_PYTHON_PATH': '',
-        'PIPENV_VENV_IN_PROJECT': '1',  # Store venv in project so removed when done
-    }
     def sub_pipenv(cmd, **kwargs):
+        sub_env = {
+            'PATH': path_without_venv,
+            'PIP_PYTHON_PATH': '',
+            'PIPENV_VENV_IN_PROJECT': '1',  # Store venv in project so removed when done
+        }
         return inv.run(f'pipenv {cmd}', env=sub_env, **kwargs)
 
     # Install and test in a tmpdir (auto-removed)
