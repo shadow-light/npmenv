@@ -5,6 +5,7 @@ import sys
 import json
 from urllib import request
 from pathlib import Path
+from getpass import getpass
 from tempfile import TemporaryDirectory
 from contextlib import contextmanager
 
@@ -185,7 +186,7 @@ def release(inv):
 
     # Upload to test pypi
     twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
-    os.environ['TWINE_PASSWORD'] = input('PyPI password: ')
+    os.environ['TWINE_PASSWORD'] = getpass('PyPI password: ')
     inv.run(twine_cmd + ' --repository-url https://test.pypi.org/legacy/')
 
     # Form new PATH value for subprocess with current venv removed
