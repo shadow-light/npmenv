@@ -15,4 +15,6 @@ twine = "*"
 pipenv = "*"
 
 [requires]
-python_version = "3.6"  # For local dev sake; CI's should create venv beforehand
+# Python version used by setup.py (but hard-coded in README.md)
+# NOTE Here for development sake only; CIs need to override for newer version tests
+python_version = "3.6"
