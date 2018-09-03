@@ -26,7 +26,7 @@ setup(
     python_requires='~={}'.format(pipfile['requires']['python_version']),
 
     # Auto create platform-specific script to run the CLI
-    entry_points={'console_scripts': ['npmenv = npmenv']},
+    entry_points={'console_scripts': ['npmenv = npmenv:_cli']},
 
     # Metadata
     author='shadow-light',
