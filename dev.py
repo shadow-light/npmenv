@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+from uuid import uuid4
 from urllib import request
 from pathlib import Path
 from getpass import getpass
@@ -127,7 +128,7 @@ def package(inv, version=None):
 
     # Remove old files
     for file in Path('dist').iterdir():
-        if file.suffix in ('.whl', '.gz'):
+        if file.suffix in ('.whl', '.gz', '.asc'):
             file.unlink()
     assert len(list(Path('dist').iterdir())) == 0
 
@@ -181,8 +182,9 @@ def release(inv):
     last_version = git_out('describe --abbrev=0')
     version = _get_new_version(last_version)
 
-    # Produce packages
-    package(inv, version)
+    # Produce packages for test PyPI (with random version so can reupload on error)
+    test_version = version + '-' + str(uuid4())[:6]
+    package(inv, test_version)
 
     # Upload to test pypi
     twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
@@ -196,18 +198,28 @@ def release(inv):
     path_without_venv = os.pathsep.join(path_without_venv)
 
     # Helper for running pipenv commands in sub env
+    sub_env = {
+        'PATH': path_without_venv,
+        'PIP_PYTHON_PATH': '',
+        'PIPENV_VENV_IN_PROJECT': '1',  # Store venv in project so removed when done
+    }
     def sub_pipenv(cmd, **kwargs):
-        return inv.run(f'pipenv {cmd}', env={'PATH': path_without_venv}, **kwargs)
+        return inv.run(f'pipenv {cmd}', env=sub_env, **kwargs)
 
     # Install and test in a tmpdir (auto-removed)
     tests_path = Path('npmenv_test.py').resolve()
     with TemporaryDirectory() as tmpdir:
-        with inv.cd(tmpdir):
+        # Work in a subdir since pipenv fails in a subdir of /tmp for some reason
+        tmpdir = Path(tmpdir) / 'subdir'
+        tmpdir.mkdir()
+        with inv.cd(str(tmpdir)):
             # Install npmenv from test PyPI
             import_npmenv = 'run python -c "import npmenv"'
-            assert sub_pipenv(import_npmenv, warn=True).failed
-            sub_pipenv('install --pypi-mirror https://test.pypi.org/simple/ npmenv')
-            assert sub_pipenv(import_npmenv, warn=True).ok
+            assert sub_pipenv(import_npmenv, warn=True, hide='both').failed
+            sub_pipenv('install appdirs')  # Can't get from test PyPI
+            pypi_mirror = 'https://test.pypi.org/simple/'
+            sub_pipenv(f'install npmenv=={test_version} --pypi-mirror {pypi_mirror}')
+            sub_pipenv(import_npmenv)  # Should now be able to import
             # Confirm npmenv executable works
             assert sub_pipenv('run npmenv env-list').ok
             # Copy in tests and run
@@ -218,7 +230,8 @@ def release(inv):
     # Tag commit with version
     inv.run('git tag --sign')
 
-    # Upload to production pypi
+    # Produce package for real PyPI and upload
+    package(inv, version)
     inv.run(twine_cmd)
 
 
