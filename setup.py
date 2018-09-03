@@ -31,8 +31,7 @@ setup(
     # Metadata
     author='shadow-light',
     author_email='42055707+shadow-light@users.noreply.github.com',
-    description=("Wrapper for npm that stores node_modules outside of project dir and"
-        " supports per-project node versions."),
+    description=("A wrapper for npm that stores node_modules outside of project and provides easy access to them."),  # WARN Also hard-coded in GitHub and README.md
     long_description=Path('README.md').read_text(),
     long_description_content_type='text/markdown',
     license='MIT',
