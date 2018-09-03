@@ -6,6 +6,8 @@ from setuptools import setup
 from pipenv.utils import convert_deps_to_pip
 from pipenv.project import Project
 
+import dev
+
 
 # Access to pipfile
 # NOTE Shouldn't need to chdir (and default is True)
@@ -32,7 +34,7 @@ setup(
     author='shadow-light',
     author_email='42055707+shadow-light@users.noreply.github.com',
     description=("A wrapper for npm that stores node_modules outside of project and provides easy access to them."),  # WARN Also hard-coded in GitHub and README.md
-    long_description=Path('README.md').read_text(),
+    long_description=dev._documentation(),
     long_description_content_type='text/markdown',
     license='MIT',
     url='https://github.com/shadow-light/npmenv',
