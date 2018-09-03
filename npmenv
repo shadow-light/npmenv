@@ -1,0 +1,3 @@
+#!/bin/sh
+# Linux only script for executing npmenv's CLI during development
+pipenv run python -c "import npmenv; npmenv._cli()" "$@"
