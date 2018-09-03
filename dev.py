@@ -147,7 +147,7 @@ def release(inv):
 
     # Helper to get git stdout
     def git_out(cmd):
-        result = inv.run(f'git {cmd}', warn=True)
+        result = inv.run(f'git {cmd}', warn=True, pty=False)
         if result.failed:
             return None
         return result.stdout.strip()
