@@ -103,13 +103,13 @@ def insert_project_files(sandbox):
 def fake_project():
     """ Provide paths for a fake project that doesn't override NPMENV_DIR """
     proj_dir = '/tmp/fake'
-    env_id = 'tmp-fake-SHCEzZKG'
+    env_id = 'tmp__fake__SHCEzZKG'
     data_dir = '.local/share'
     if platform.system() == 'Darwin':
         data_dir = 'Library/Application Support'
     if platform.system() == 'Windows':
         proj_dir = 'C:' + proj_dir
-        env_id = 'TEMP-fake-60Sq7Ynp'
+        env_id = 'TEMP__fake__60Sq7Ynp'
         data_dir = 'AppData/Local/shadow-light'
     return {
         'proj_dir': Path(proj_dir),
@@ -303,7 +303,7 @@ def test_env_list():
     # Trigger creating env for CWD
     npmenv.env_npm('help')
     # Ensure list gives new env
-    assert npmenv.env_list()[0][1] == str(Path.cwd())
+    assert npmenv.env_list()[0][1] == Path.cwd()
 
 
 def test_env_cleanup(sandbox, insert_project_files, tmpdir_factory):
@@ -312,16 +312,16 @@ def test_env_cleanup(sandbox, insert_project_files, tmpdir_factory):
     npmenv.env_npm()
 
     # Create additional project with no config
-    npmenv.env_npm(proj_dir=str(tmpdir_factory.mktemp()))
+    npmenv.env_npm(proj_dir=str(tmpdir_factory.mktemp('npmenv_test_project')))
 
     # Create additional project and then delete
-    proj3 = Path(str(tmpdir_factory.mktemp()))
+    proj3 = Path(str(tmpdir_factory.mktemp('npmenv_test_project')))
     npmenv.env_npm(proj_dir=proj3)
     proj3.rmdir()
 
     # Confirm issues
-    issues = sorted([env[2] for env in npmenv.env_list()])
-    assert issues == [None, 'missing', 'no_config']
+    issues = set([env[2] for env in npmenv.env_list()])
+    assert issues == set([None, 'missing', 'no_config'])
 
     # Remove envs with issues
     removed = npmenv.env_cleanup()
@@ -335,7 +335,7 @@ def test_env_location(sandbox):
     # Simple test (just made of already tested private methods anyway)
     env_dir = npmenv.env_location()
     env_dir.relative_to(sandbox['envs'])  # Raises ValueError if can't
-    assert env_dir.name.startswith(sandbox['proj_dir'].name + '-')
+    assert env_dir.name.startswith(sandbox['proj_dir'].parent.name + '__')
 
 
 def test_env_run(sandbox, capfd):
