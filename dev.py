@@ -206,6 +206,6 @@ def release(inv):
 # CLI
 
 
-program = Program('source', Collection(test, test_lint, test_unit, release))
+program = Program('source', Collection(test, test_lint, test_unit, package, release))
 if __name__ == '__main__':
     program.run()
