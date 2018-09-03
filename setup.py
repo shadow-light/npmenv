@@ -16,7 +16,7 @@ setup(
     # Essentials
     name='npmenv',
     version=os.environ['NPMENV_VERSION'],
-    packages=['npmenv'],
+    py_modules=['npmenv'],
 
     # Get dependencies from Pipfile (does not include dev packages)
     # NOTE `r=False` prevents a requirements file being created and returned
@@ -30,6 +30,7 @@ setup(
 
     # Metadata
     author='shadow-light',
+    author_email='42055707+shadow-light@users.noreply.github.com',
     description=("Wrapper for npm that stores node_modules outside of project dir and"
         " supports per-project node versions."),
     long_description=Path('README.md').read_text(),
