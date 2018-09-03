@@ -167,7 +167,7 @@ class TestCli:
         npmenv._cli()
         assert str(sandbox['proj_dir']) in capfd.readouterr().out
 
-    def test_env_cleanup(self, monkeypatch, sandbox, insert_project_files, tmpdir):
+    def test_env_cleanup(self, monkeypatch, sandbox, insert_project_files, tmpdir, capfd):
         # Test two projects, only one having config files
         proj1 = str(sandbox['proj_dir'])
         proj2 = str(tmpdir)
@@ -320,11 +320,11 @@ def test_env_cleanup(sandbox, insert_project_files, tmpdir_factory):
     proj3.rmdir()
 
     # Confirm issues
-    issues = sorted([env[2] for env in env_list()])
+    issues = sorted([env[2] for env in npmenv.env_list()])
     assert issues == [None, 'missing', 'no_config']
 
     # Remove envs with issues
-    removed = env_cleanup()
+    removed = npmenv.env_cleanup()
 
     # Confirm only removed envs with issues
     assert len(removed) == 2
