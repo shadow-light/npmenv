@@ -2,10 +2,10 @@
 
 import sys
 import json
-from urllib import Request
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from contextlib import contextmanager
+from urllib.request import Request
 
 from invoke import task, Program, Collection
 
