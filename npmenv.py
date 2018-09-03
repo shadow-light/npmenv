@@ -249,7 +249,7 @@ def env_list() -> list:
             issue = None
             if not proj_dir.is_dir():
                 issue = 'missing'
-            if not any(proj_config.is_file(), proj_lock.is_file()):
+            if not proj_config.is_file() and not proj_lock.is_file():
                 issue = 'no_config'
             # Add to list
             envs.append((item.name, proj_dir, issue))
