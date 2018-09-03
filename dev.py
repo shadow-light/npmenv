@@ -3,10 +3,10 @@
 import os
 import sys
 import json
+from urllib import request
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from contextlib import contextmanager
-from urllib.request import Request
 
 from invoke import task, Program, Collection
 
@@ -17,8 +17,9 @@ from invoke import task, Program, Collection
 def _get_ci_status(commit):
     """ Return CI status as boolean for given commit (None if not finished) """
     url = f'https://api.github.com/repos/shadow-light/npmenv/commits/{commit}/status'
-    request = Request(url, headers={'Accept': 'application/vnd.github.v3+json'})
-    state = json.loads(request.read().decode())['state']
+    headers = {'Accept': 'application/vnd.github.v3+json'}
+    resp = request.urlopen(request.Request(url, headers=headers))
+    state = json.loads(resp.read().decode())['state']
     return None if state == 'pending' else state == 'success'
 
 
