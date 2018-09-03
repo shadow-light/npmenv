@@ -84,7 +84,7 @@ def _resolve_proj_dir(given_proj_dir:Path_or_str=None) -> Path:
     return Path(given_proj_dir).resolve()
 
 
-def _cli() -> None:
+def _cli() -> None:  # noqa: C901 (complexity)
     """ Process argv and wrap npm or execute custom command """
     cmd = None if len(sys.argv) == 1 else sys.argv[1]
     env_args = sys.argv[2:]
