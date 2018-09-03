@@ -25,11 +25,21 @@ Path_or_str = Union[Path, str]
 __version__ = 'source'  # Replaced when packaged
 
 
+HELP = f'''
+npmenv {__version__}
+env-list            List all currently existing environments
+env-location        Output path to env for current dir (may not exist yet)
+env-run cmd [args]  Run command with env's bin dir in start of PATH
+env-rm [env_id]     Remove the env for current dir (or env with given id)
+env-cleanup         Remove envs for projects that no longer exist
+'''
+
+
 NPMENV_DIR = Path(user_data_dir('npmenv', 'shadow-light'))
 
 
 class NpmenvException(Exception):
-    pass
+    """ Exception for npmenv-related issues """
 
 
 # PRIVATE
@@ -91,16 +101,7 @@ def _cli() -> None:  # noqa: C901 (complexity)
 
     # Special case: help command prints npmenv commands and then hands over to npm
     if cmd in (None, 'help', '--help', '-h'):
-        help = (
-            f"npmenv {__version__}",
-            "env-list            List all currently existing environments",
-            "env-location        Output path to env for current dir (may not exist yet)",
-            "env-run cmd [args]  Run command with env's bin dir in start of PATH",
-            "env-rm [env_id]     Remove the env for current dir (or env with given id)",
-            "env-cleanup         Remove envs for projects that no longer exist",
-            "----------",
-        )
-        print('\n'.join(help) + '\n')
+        print(HELP + '\n----------\n\n')
 
     # Helper for issues
     def issue_to_str(issue):
@@ -257,21 +258,15 @@ def env_list() -> list:
 
 
 def env_location(proj_dir:Path_or_str=None) -> Path:
-    """ Return env dir path for given project dir
-
-    NOTE The env may not exist yet; this just reports where it would be if it did
-
-    """
+    """ Return env dir path for given project dir (may/may not exist yet) """
     return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
 def env_run(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
-    """ Run a command with node_modules/.bin at start of PATH environment variable
+    """ Run a command with node_modules/.bin at start of PATH environment variable """
 
-    NOTE If node is installed as a package then it should be used to run scripts
-        WARN Scripts may depend on system binaries so should not clear existing PATH value
-
-    """
+    # NOTE If node is installed as a package then it should be used to run scripts
+    # WARN Scripts may depend on system binaries so should not clear existing PATH value
 
     # Get path to env's .bin
     proj_dir = _resolve_proj_dir(proj_dir)
