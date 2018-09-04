@@ -5,6 +5,7 @@ import sys
 import json
 import pydoc
 import inspect
+from time import sleep
 from random import randint
 from urllib import request
 from pathlib import Path
@@ -238,6 +239,7 @@ def release(inv):
     twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
     os.environ['TWINE_PASSWORD'] = getpass('PyPI password: ')
     inv.run(twine_cmd + ' --repository-url https://test.pypi.org/legacy/')
+    sleep(5)  # Need delay for PyPI to make new version available for download
 
     # Form new PATH value for subprocess with current venv removed
     path_without_venv = os.environ['PATH'].split(os.pathsep)
