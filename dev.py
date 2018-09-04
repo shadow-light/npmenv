@@ -98,7 +98,7 @@ def _get_new_version(last_str):
     print(f"Last version is: {last_str}")
 
     # Convert the given version string to digits
-    last_digits = (int(n) for n in last_str.split('.'))
+    last_digits = tuple(int(n) for n in last_str.split('.'))
     assert len(last_digits) == 3
 
     # Loop until user bumps version correctly
