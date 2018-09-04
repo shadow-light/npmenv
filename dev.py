@@ -267,16 +267,15 @@ def release(inv):
             import_npmenv = 'run python -c "import npmenv"'
             assert sub_pipenv(import_npmenv, warn=True, hide='both').failed
 
-            # Install appdirs normally as can't get from test PyPI
-            sub_pipenv('install appdirs')
-
             # Install npmenv from test PyPI
-            install_args = '--pre --pypi-mirror https://test.pypi.org/simple/'
-            install_cmd = f'install npmenv=={test_version} {install_args}'
+            # NOTE Using `--extra-index-url` so dependencies downloaded from normal index
+            # NOTE The required options for install not supported in pipenv, so using pip
+            install_args = '--pre --extra-index-url https://test.pypi.org/simple/'
+            install_cmd = f'run pip install npmenv=={test_version} {install_args}'
             while True:
                 if sub_pipenv(install_cmd, warn=True).ok:
                     break
-                if input("Version not available yet. Retry? (y/n)") != 'y':
+                if input("Version not available yet. Retry? (y/n): ") != 'y':
                     sys.exit("Release aborted")
 
             # Confirm can now import the module
