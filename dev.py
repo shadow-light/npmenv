@@ -239,7 +239,6 @@ def release(inv):
     twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
     os.environ['TWINE_PASSWORD'] = getpass('PyPI password: ')
     inv.run(twine_cmd + ' --repository-url https://test.pypi.org/legacy/')
-    sleep(5)  # Need delay for PyPI to make new version available for download
 
     # Form new PATH value for subprocess with current venv removed
     path_without_venv = os.environ['PATH'].split(os.pathsep)
@@ -267,8 +266,15 @@ def release(inv):
             import_npmenv = 'run python -c "import npmenv"'
             assert sub_pipenv(import_npmenv, warn=True, hide='both').failed
             sub_pipenv('install appdirs')  # Can't get from test PyPI
-            pypi_url = 'https://test.pypi.org/simple/'
-            sub_pipenv(f'install npmenv=={test_version} --pre --pypi-mirror {pypi_url}')
+            install_args = '--pre --pypi-mirror https://test.pypi.org/simple/'
+            install_cmd = f'install npmenv=={test_version} {install_args}'
+            attempts = 0
+            while attempts < 10:
+                if sub_pipenv(install_cmd, warn=True).ok:
+                    break
+                print("Version not available yet? Will retry in 5 secs")
+                sleep(5)
+                attempts += 1
             sub_pipenv(import_npmenv)  # Should now be able to import
             # Confirm npmenv executable works
             assert sub_pipenv('run npmenv env-list').ok
