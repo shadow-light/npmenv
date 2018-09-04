@@ -210,7 +210,7 @@ def package(inv, version=None):
     assert len(list(Path('dist').iterdir())) == 2
 
 
-@task
+@task  # noqa: C901 (complexity)
 def release(inv):
     """ Release a new version of the module """
 
