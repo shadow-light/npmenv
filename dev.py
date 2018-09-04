@@ -5,7 +5,7 @@ import sys
 import json
 import pydoc
 import inspect
-from uuid import uuid4
+from random import randint
 from urllib import request
 from pathlib import Path
 from getpass import getpass
@@ -231,7 +231,7 @@ def release(inv):
     version = _get_new_version(last_version)
 
     # Produce packages for test PyPI (with random version so can reupload on error)
-    test_version = version + '-' + str(uuid4())[:6]
+    test_version = f'{version}.dev{randint(0, 99)}'  # Compatible with PEP 440
     package(inv, test_version)
 
     # Upload to test pypi
@@ -275,12 +275,15 @@ def release(inv):
             sub_pipenv('install pytest')
             sub_pipenv('run pytest npmenv_test.py')
 
-    # Tag commit with version
-    inv.run('git tag --sign')
-
-    # Produce package for real PyPI and upload
-    package(inv, version)
-    inv.run(twine_cmd)
+    # Confirm release
+    if input(f'All looks good. Do the release? (y/n): ') == 'y':
+        # Produce package for real PyPI and upload
+        package(inv, version)
+        inv.run(twine_cmd)
+        # Tag commit with version
+        inv.run(f'git tag --sign {version} -m "Version {version}"')
+    else:
+        sys.exit("Release aborted")
 
 
 # CLI
