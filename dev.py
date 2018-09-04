@@ -113,10 +113,10 @@ def _get_new_version(last_str):
             continue
         level = levels.index(level)
         digits[level] += 1
-        version = '.'.join(digits)
+        version = '.'.join(str(n) for n in digits)
 
         # Confirm version is correct
-        if input(f'Is {version} correct? (y/n): ') == 'y':
+        if input(f"Is {version} correct? (y/n): ") == 'y':
             return version
 
 
