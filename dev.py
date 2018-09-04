@@ -317,15 +317,17 @@ def release(inv):
             break
 
     # Confirm release
-    if input(f"All looks good. Do the release? (y/n): ") == 'y':
-        # Tag commit with version
-        # WARN Must come before package so version msg is included in the README
-        inv.run(f'git tag --sign {version} -m {shlex.quote(msg)}')
-        # Produce package for real PyPI and upload
-        package(inv, version)
-        inv.run(twine_cmd)
-    else:
+    if input(f"All looks good. Do the release? (y/n): ") != 'y':
         sys.exit("Release aborted")
+
+    # Tag commit with version
+    # WARN Must come before package so version msg is included in the README
+    inv.run(f'git tag --sign {version} -m {shlex.quote(msg)}')
+
+    # Produce package for real PyPI and upload
+    package(inv, version)
+    inv.run(twine_cmd)
+    print(f"Released {version}!")
 
 
 # CLI
