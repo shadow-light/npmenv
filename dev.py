@@ -323,6 +323,7 @@ def release(inv):
     # Tag commit with version
     # WARN Must come before package so version msg is included in the README
     inv.run(f'git tag --sign {version} -m {shlex.quote(msg)}')
+    inv.run('git push --follow-tags')  # Push the new tag
 
     # Produce package for real PyPI and upload
     package(inv, version)
