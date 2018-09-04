@@ -265,8 +265,8 @@ def release(inv):
             import_npmenv = 'run python -c "import npmenv"'
             assert sub_pipenv(import_npmenv, warn=True, hide='both').failed
             sub_pipenv('install appdirs')  # Can't get from test PyPI
-            pypi_mirror = 'https://test.pypi.org/simple/'
-            sub_pipenv(f'install npmenv=={test_version} --pypi-mirror {pypi_mirror}')
+            pypi_url = 'https://test.pypi.org/simple/'
+            sub_pipenv(f'install npmenv=={test_version} --pre --pypi-mirror {pypi_url}')
             sub_pipenv(import_npmenv)  # Should now be able to import
             # Confirm npmenv executable works
             assert sub_pipenv('run npmenv env-list').ok
