@@ -27,11 +27,13 @@ __version__ = 'source'  # Replaced when packaged
 
 HELP = f'''
 npmenv {__version__}
+
 env-list            List all currently existing environments
 env-location        Output path to env for current dir (may not exist yet)
 env-run cmd [args]  Run command with env's bin dir in start of PATH
 env-rm [env_id]     Remove the env for current dir (or env with given id)
 env-cleanup         Remove envs for projects that no longer exist
+*any npm command*
 '''
 
 
@@ -236,7 +238,7 @@ def env_cleanup() -> list:
 
 
 def env_list() -> list:
-    """ Return list of npmenv ids and their corresponding project dirs """
+    """ Return list of tuples (env id, project dir, issue with project existance) """
     envs = []
     for item in NPMENV_DIR.iterdir():
         # NOTE Ignores any files or dirs that don't have a .project file

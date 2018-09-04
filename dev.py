@@ -45,7 +45,7 @@ def _documentation():
     doc += f"## CLI usage\n```{npmenv.HELP}```\n\n\n"
 
     # Add API documentation
-    doc += "## Module API\n```"
+    doc += "## Module API\n```\n"
     for name, value in inspect.getmembers(npmenv):
         # Skip any builtin or imported members
         # NOTE This also ignores anything without a __module__ attribute (e.g. variables)
