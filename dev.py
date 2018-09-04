@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import pydoc
+import shlex
 import inspect
 from random import randint
 from urllib import request
@@ -30,7 +31,7 @@ def _cd(path):
         os.chdir(cwd)
 
 
-def _documentation():
+def _documentation(inv):
     """ Return auto-generated documentation in Markdown """
 
     # Start with README.md
@@ -42,7 +43,7 @@ def _documentation():
 
     # Add help text
     import npmenv
-    doc += f"## CLI usage\n```{npmenv.HELP}```\n\n\n"
+    doc += f"## CLI usage\n```{npmenv.HELP}```\n\n"
 
     # Add API documentation
     doc += "## Module API\n```\n"
@@ -63,7 +64,12 @@ def _documentation():
         doc += pydoc.plaintext.document(value) + '\n'
 
     # Close doc block
-    doc += '```\n'
+    doc += '```\n\n'
+
+    # Add version history
+    versions_cmd = 'git tag --list "*.*.*" -n99 --sort "-version:refname"'
+    history = inv.run(versions_cmd, hide='both').stdout
+    doc += f'## Version history\n```\n{history}```\n'
 
     # Done
     return doc
@@ -166,7 +172,7 @@ def test_unit(inv, pdb=False, failed=False):
 @task
 def doc(inv):
     """ Print documentation """
-    print(_documentation())
+    print(_documentation(inv))
 
 
 @task
@@ -301,13 +307,20 @@ def release(inv):
             sub_pipenv('install pytest')
             sub_pipenv('run pytest npmenv_test.py')
 
+    # Get version message
+    while True:
+        msg = input("Version message (used in tag and documentation): ")
+        print(msg)
+        if input("Are you happy with the above message? (y/n): ") == 'y':
+            break
+
     # Confirm release
-    if input(f'All looks good. Do the release? (y/n): ') == 'y':
+    if input(f"All looks good. Do the release? (y/n): ") == 'y':
         # Produce package for real PyPI and upload
         package(inv, version)
         inv.run(twine_cmd)
         # Tag commit with version
-        inv.run(f'git tag --sign {version} -m "Version {version}"')
+        inv.run(f'git tag --sign {version} -m {shlex.quote(msg)}')
     else:
         sys.exit("Release aborted")
 

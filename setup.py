@@ -2,10 +2,9 @@
 import os
 from setuptools import setup
 
+from invoke import run
 from pipenv.utils import convert_deps_to_pip
 from pipenv.project import Project
-
-import dev
 
 
 # Access to pipfile
@@ -33,7 +32,7 @@ setup(
     author='shadow-light',
     author_email='42055707+shadow-light@users.noreply.github.com',
     description=("A wrapper for npm that stores node_modules outside of project and provides easy access to them."),  # noqa: E501 WARN Also hard-coded in GitHub and README.md
-    long_description=dev._documentation(),
+    long_description=run('python dev.py doc').stdout,
     long_description_content_type='text/markdown',
     license='MIT',
     url='https://github.com/shadow-light/npmenv',
