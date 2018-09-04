@@ -1,8 +1,8 @@
 
 environment:
     matrix:
-        - PYTHON: '3.6'
-        - PYTHON: '3.7'
+        - PYTHON: '3.6'  # Oldest version supported
+        - PYTHON: '3.7'  # Newest version supported
 
 # WARN Avoid powershell as it fails if anything written to stderr (even if success)
 #   pip and pipenv do this with warnings etc
