@@ -18,6 +18,18 @@ from invoke import task, Program, Collection
 # UTILS
 
 
+@contextmanager
+def _cd(path):
+    """ Temporarily change to a certain dir """
+    path = Path(path)
+    cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield path
+    finally:
+        os.chdir(cwd)
+
+
 def _documentation():
     """ Return auto-generated documentation in Markdown """
 
@@ -261,7 +273,7 @@ def release(inv):
         # Work in a subdir since pipenv fails in a subdir of /tmp for some reason
         tmpdir = Path(tmpdir) / 'subdir'
         tmpdir.mkdir()
-        with inv.cd(str(tmpdir)):
+        with _cd(tmpdir):
 
             # Confirm module not available
             import_npmenv = 'run python -c "import npmenv"'
