@@ -5,7 +5,6 @@ import sys
 import json
 import pydoc
 import inspect
-from time import sleep
 from random import randint
 from urllib import request
 from pathlib import Path
@@ -258,26 +257,34 @@ def release(inv):
     # Install and test in a tmpdir (auto-removed)
     tests_path = Path('npmenv_test.py').resolve()
     with TemporaryDirectory() as tmpdir:
+
         # Work in a subdir since pipenv fails in a subdir of /tmp for some reason
         tmpdir = Path(tmpdir) / 'subdir'
         tmpdir.mkdir()
         with inv.cd(str(tmpdir)):
-            # Install npmenv from test PyPI
+
+            # Confirm module not available
             import_npmenv = 'run python -c "import npmenv"'
             assert sub_pipenv(import_npmenv, warn=True, hide='both').failed
-            sub_pipenv('install appdirs')  # Can't get from test PyPI
+
+            # Install appdirs normally as can't get from test PyPI
+            sub_pipenv('install appdirs')
+
+            # Install npmenv from test PyPI
             install_args = '--pre --pypi-mirror https://test.pypi.org/simple/'
             install_cmd = f'install npmenv=={test_version} {install_args}'
-            attempts = 0
-            while attempts < 10:
+            while True:
                 if sub_pipenv(install_cmd, warn=True).ok:
                     break
-                print("Version not available yet? Will retry in 5 secs")
-                sleep(5)
-                attempts += 1
-            sub_pipenv(import_npmenv)  # Should now be able to import
+                if input("Version not available yet. Retry? (y/n)") != 'y':
+                    sys.exit("Release aborted")
+
+            # Confirm can now import the module
+            sub_pipenv(import_npmenv)
+
             # Confirm npmenv executable works
             assert sub_pipenv('run npmenv env-list').ok
+
             # Copy in tests and run
             Path('npmenv_test.py').write_text(tests_path.read_text())
             sub_pipenv('install pytest')
