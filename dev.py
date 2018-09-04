@@ -308,6 +308,8 @@ def release(inv):
             sub_pipenv('run pytest npmenv_test.py')
 
     # Get version message
+    print('\n\n\nList of commits since last release:\n\n')
+    inv.run(f'git log --date-order {last_version or ''}..HEAD')
     while True:
         msg = input("Version message (used in tag and documentation): ")
         print(msg)
