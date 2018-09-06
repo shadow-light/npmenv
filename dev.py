@@ -168,7 +168,7 @@ def test_unit(inv, pdb=False, failed=False):
     """ Run unit tests """
     pdb = '--pdb' if pdb else ''
     failed = '--last-failed' if failed else ''  # Only run tests that previously failed
-    inv.run(f'pytest {pdb} {failed} .')
+    inv.run(f'pytest --cov=npmenv --cov-report=term-missing {pdb} {failed} .')
 
 
 @task
