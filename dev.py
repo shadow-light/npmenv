@@ -166,9 +166,12 @@ def test_lint(inv):
 @task
 def test_unit(inv, pdb=False, failed=False):
     """ Run unit tests """
-    pdb = '--pdb' if pdb else ''
-    failed = '--last-failed' if failed else ''  # Only run tests that previously failed
-    inv.run(f'pytest --cov=npmenv --cov-report=term-missing {pdb} {failed} .')
+    cmd = f'pytest --cov=npmenv --cov-report=term-missing --cov-fail-under=90'
+    if pdb:
+        cmd += ' --pdb'
+    if failed:
+        cmd += ' --last-failed'  # Only run tests that previously failed
+    inv.run(f'{cmd} .')
 
 
 @task
