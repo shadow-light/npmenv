@@ -189,7 +189,7 @@ def package(inv, version=None):
     env_override = {
         # Pass version to setup.py via env
         'NPMENV_VERSION': version,
-        # Undo pipenv preventing pyc file creation
+        # Undo pipenv preventing pyc file creation (setup.py warns otherwise)
         # NOTE Will be removed later, see https://git.io/fA8fl
         'PYTHONDONTWRITEBYTECODE': '',
     }
