@@ -196,9 +196,9 @@ class TestCli:
         npmenv._cli()
 
     def test_env_run(self, monkeypatch):
-        # Just test failure due to env not existing (success case tested elsewhere)
-        self._patch_argv(monkeypatch, ['env-run', 'node'])
-        with assert_exit_with_success(False):
+        npmenv.env_npm('install "username-cli@2.0.0"').check_returncode()
+        self._patch_argv(monkeypatch, ['env-run', 'username', '--help'])
+        with assert_exit_with_success(True):
             npmenv._cli()
 
     def test_npm(self, monkeypatch, capfd):
