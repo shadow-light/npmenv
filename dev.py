@@ -158,7 +158,9 @@ def test_lint(inv):
     # NOTE mypy separated from flake8 as flake8-mypy was buggy (and no 3.7 support)
     inv.run('flake8 .')
     for file in Path().glob('**/*.py'):  # Mypy doesn't support globbing
-        inv.run(f'mypy {file}')
+        # Require all functions of actual module (not tests etc) to be typed
+        module_args = '--disallow-untyped-defs' if file.stem == 'npmenv' else ''
+        inv.run(f'mypy --ignore-missing-imports {module_args} {file}')
 
 
 @task
