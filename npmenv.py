@@ -4,7 +4,7 @@ import sys
 import shlex
 import subprocess
 from shutil import rmtree
-from typing import Union, Sequence, Generator
+from typing import Union, Sequence, Generator, Any
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
@@ -22,10 +22,10 @@ Path_or_str = Union[Path, str]
 # MODULE LEVEL
 
 
-__version__ = 'source'  # Replaced when packaged
+__version__:str = 'source'  # Replaced when packaged
 
 
-HELP = f'''
+HELP:str = f'''
 npmenv {__version__}
 
 env-list            List all currently existing environments
@@ -37,7 +37,7 @@ env-cleanup         Remove envs for projects that no longer exist
 '''
 
 
-NPMENV_DIR = Path(user_data_dir('npmenv', 'shadow-light'))
+NPMENV_DIR:Path = Path(user_data_dir('npmenv', 'shadow-light'))
 
 
 class NpmenvException(Exception):
@@ -59,7 +59,7 @@ def _cd(path:Path_or_str) -> Generator[Path, None, None]:
         os.chdir(cwd)
 
 
-def _shell(args:str, **kwargs) -> subprocess.CompletedProcess:
+def _shell(args:str, **kwargs:Any) -> subprocess.CompletedProcess:
     """ Run a command in a shell for cross-platform support """
     # WARN If shell=False on Windows then must give full path to the executable!
     return subprocess.run(args, shell=True, **kwargs)
@@ -106,7 +106,7 @@ def _cli() -> None:  # noqa: C901 (complexity)
         print(HELP + '\n----------\n\n')
 
     # Helper for issues
-    def issue_to_str(issue):
+    def issue_to_str(issue:str=None) -> str:
         if issue == 'missing':
             return '(no longer exists)'
         if issue == 'no_config':
