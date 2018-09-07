@@ -3,13 +3,15 @@ environment:
     matrix:
         - PYTHON: '3.6'  # Oldest version supported
         - PYTHON: '3.7'  # Newest version supported
+        - {PYTHON: '3.7', UPDATE: 'y'}  # Newest version and dependencies
 
 # WARN Avoid powershell as it fails if anything written to stderr (even if success)
 #   pip and pipenv do this with warnings etc
 install:
     - python -m pip --disable-pip-version-check install pipenv
     - pipenv --python %PYTHON%
-    - pipenv install --dev
+    - if "%UPDATE%" == "y" (pipenv update)
+    - pipenv sync --dev
 
 build: false
 

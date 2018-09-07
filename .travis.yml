@@ -11,8 +11,10 @@ matrix:
         # Test oldest and newest Python versions that are supported
         - {python: '3.6'}
         - {python: '3.7', sudo: true}  # 3.7 requires sudo for some reason
-        - {os: osx, language: generic, env: TRAVIS_PYTHON_VERSION="3.6"}
-        - {os: osx, language: generic, env: TRAVIS_PYTHON_VERSION="3.7"}
+        - {python: '3.7', sudo: true, env: 'UPDATE="y"'}  # Latest python with latest deps
+        - {os: osx, language: generic, env: 'TRAVIS_PYTHON_VERSION="3.6"'}
+        - {os: osx, language: generic, env: 'TRAVIS_PYTHON_VERSION="3.7"'}
+        - {os: osx, language: generic, env: 'TRAVIS_PYTHON_VERSION="3.7" UPDATE="y"'}
 
 
 before_install: |
@@ -42,7 +44,9 @@ before_install: |
     fi
 
 
-install: pipenv install --dev
+install: |
+    test $UPDATE == "y" && pipenv update
+    pipenv sync --dev
 
 
 script: pipenv run python dev.py test --python $TRAVIS_PYTHON_VERSION
