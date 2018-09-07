@@ -10,8 +10,13 @@ environment:
 install:
     - python -m pip --disable-pip-version-check install pipenv
     - pipenv --python %PYTHON%
-    - if "%UPDATE%" == "y" (pipenv update)
+    # Diff platforms require diff deps (e.g. pytest-cov) so must recreate lock file
+    # TODO Stop this from upgrading all packages when possible (https://git.io/fAzzE)
+    # Oldest and latest deps still tested in Travis, so not a big deal
+    - pipenv lock --dev
+    # - if "%UPDATE%" == "y" (pipenv update) TODO Happens always until above fixed
     - pipenv sync --dev
+    - pipenv graph  # For debugging's sake
 
 build: false
 
