@@ -45,7 +45,7 @@ before_install: |
 
 
 install: |
-    test $UPDATE == "y" && pipenv update
+    test "$UPDATE" == "y" && pipenv update
     pipenv sync --dev
 
 
