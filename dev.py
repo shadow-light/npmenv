@@ -125,8 +125,8 @@ def _set_version_in_module(version):
     """ Temporarily change the version in npmenv.py for packaging """
     path = Path('npmenv.py')
     original = path.read_text()
-    version_line_old = "__version__ = 'source'"
-    version_line_new = f"__version__ = '{version}'"
+    version_line_old = "__version__:str = 'source'"
+    version_line_new = f"__version__:str = '{version}'"
     versioned = original.replace(version_line_old, version_line_new, 1)
     assert version_line_new in versioned
     path.write_text(versioned)
