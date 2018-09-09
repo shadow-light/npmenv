@@ -22,6 +22,9 @@ setup(
     # NOTE `r=False` prevents a requirements file being created and returned
     install_requires=convert_deps_to_pip(pipfile['packages'], r=False),
 
+    # Add empty marker file to identity package as being typed
+    package_data={'npmenv': ['py.typed']},
+
     # Support Pipfile version and future minor releases (but not major)
     python_requires='~={}'.format(pipfile['requires']['python_version']),
 
