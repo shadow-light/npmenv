@@ -13,7 +13,8 @@ import npmenv
 # TEST DATA
 
 
-EXAMPLE_PACKAGE = 'to-no-case'  # Tiny package with no dependencies
+EXAMPLE_PACKAGE = 'to-no-case@1.0.2'  # Tiny package with no dependencies
+EXAMPLE_PACKAGE_WITH_SCRIPT = 'username-cli@2.0.0'  # Tiny with a script
 PACKAGE_JSON = '''{
   "private": true,
   "dependencies": {"to-no-case": "1.0.2"}
@@ -83,7 +84,7 @@ def sandbox(request, tmpdir_factory, monkeypatch):
         'env_dir': env_dir,
         'env_package': env_dir / 'package.json',
         'env_lock': env_dir / 'package-lock.json',
-        'env_module': env_dir / 'node_modules' / EXAMPLE_PACKAGE,
+        'env_module': env_dir / 'node_modules/to-no-case',
     }
 
 
@@ -185,6 +186,15 @@ class TestCli:
         npmenv._cli()
         assert str(sandbox['env_dir']) == capfd.readouterr().out
 
+    def test_env_modules(self, monkeypatch, sandbox, capfd):
+        npmenv.env_npm(f'install "{EXAMPLE_PACKAGE}"').check_returncode()
+        self._patch_argv(monkeypatch, ['env-modules'])
+        npmenv._cli()
+        assert 'to-no-case' in capfd.readouterr().out
+        self._patch_argv(monkeypatch, ['env-modules', 'to-no-case'])
+        npmenv._cli()
+        assert 'index.js' in capfd.readouterr().out
+
     def test_env_rm(self, monkeypatch):
         # Confirm exit if removing env that doesn't exist (also test arg taking)
         self._patch_argv(monkeypatch, ['env-rm', '/tmp/fake'])
@@ -196,7 +206,7 @@ class TestCli:
         npmenv._cli()
 
     def test_env_run(self, monkeypatch):
-        npmenv.env_npm('install "username-cli@2.0.0"').check_returncode()
+        npmenv.env_npm(f'install "{EXAMPLE_PACKAGE_WITH_SCRIPT}"').check_returncode()
         self._patch_argv(monkeypatch, ['env-run', 'username', '--help'])
         with assert_exit_with_success(True):
             npmenv._cli()
@@ -212,7 +222,9 @@ class TestCli:
 
     def test_args(self, monkeypatch):
         # Confirm failure when wrong amount of args
-        for args in (['env-list', 0], ['env-location', 0], ['env-run'], ['env-rm', 0, 0]):
+        wrong = [['env-list', 0], ['env-location', 0], ['env-modules', 0, 0], ['env-run'],
+            ['env-rm', 0, 0]]
+        for args in wrong:
             self._patch_argv(monkeypatch, args)
             with pytest.raises(SystemExit):
                 npmenv._cli()
@@ -232,7 +244,7 @@ class TestEnvNpm:
 
     def test_no_files_install(self, sandbox):
         """ `env_npm` should transfer new lock file created by npm install """
-        npmenv.env_npm(f'install {EXAMPLE_PACKAGE}').check_returncode()
+        npmenv.env_npm(f'install "{EXAMPLE_PACKAGE}"').check_returncode()
         assert sandbox['env_lock'].resolve(strict=True) == sandbox['proj_lock']
         assert sandbox['env_module'].is_dir()
 
@@ -347,7 +359,7 @@ def test_env_run(sandbox, capfd):
         npmenv.env_run('username --help')
     # Confirm runs executable from .bin dir
     # Install a tiny CLI program that shouldn't exist on system yet
-    npmenv.env_npm('install "username-cli@2.0.0"').check_returncode()
+    npmenv.env_npm(f'install "{EXAMPLE_PACKAGE_WITH_SCRIPT}"').check_returncode()
     capfd.readouterr()
     npmenv.env_run('username --help').check_returncode()
     assert 'sindresorhus' in capfd.readouterr().out
