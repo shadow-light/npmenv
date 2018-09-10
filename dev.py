@@ -160,7 +160,9 @@ def test_lint(inv):
     for file in Path().glob('**/*.py'):  # Mypy doesn't support globbing
         # Require all functions of actual module (not tests etc) to be typed
         module_args = '--disallow-untyped-defs' if file.stem == 'npmenv' else ''
-        inv.run(f'mypy --ignore-missing-imports {module_args} {file}')
+        # Ignore 'missing' untyped 3P modules + require e.g. List[str] rather than 'list'
+        mypy_args = '--ignore-missing-imports --disallow-any-generics'
+        inv.run(f'mypy {mypy_args} {module_args} {file}')
 
 
 @task

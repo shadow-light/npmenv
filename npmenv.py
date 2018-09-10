@@ -4,7 +4,7 @@ import sys
 import shlex
 import subprocess
 from shutil import rmtree
-from typing import Union, Sequence, Generator, Any
+from typing import Union, Sequence, Generator, Any, List, Tuple, Optional
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
@@ -60,7 +60,7 @@ def _cd(path:Path_or_str) -> Generator[Path, None, None]:
         os.chdir(cwd)
 
 
-def _list_all_files(root):
+def _list_all_files(root:Path_or_str) -> List[Path]:
     """ Return list of files found recursively in given path """
     files = []
     for dirpath, dirnames, filenames in os.walk(root):
@@ -75,7 +75,7 @@ def _shell(args:str, **kwargs:Any) -> subprocess.CompletedProcess:
     return subprocess.run(args, shell=True, **kwargs)
 
 
-def _args_to_str(args:Sequence) -> str:
+def _args_to_str(args:Sequence[str]) -> str:
     """ Take list of args and return string that can safely be executed """
     return ' '.join([shlex.quote(arg) for arg in args])
 
@@ -152,8 +152,8 @@ def _cli() -> None:  # noqa: C901 (complexity)
                 sys.exit(f"Does not exist: {root}")
             print(f"Found in {root}\n")
             paths = _list_all_files(root) if env_args else root.iterdir()
-            paths = [str(p.relative_to(root)) for p in sorted(paths)]
-            print('\n'.join(paths))
+            paths_as_strings = [str(p.relative_to(root)) for p in sorted(paths)]
+            print('\n'.join(paths_as_strings))
 
         elif cmd == 'env-run':
             if not env_args:
@@ -223,7 +223,7 @@ def env_npm(args:str='', proj_dir:Path_or_str=None) -> subprocess.CompletedProce
     return result
 
 
-def env_rm(identifier:Path_or_str=None) -> str:
+def env_rm(identifier:Path_or_str=None) -> Path:
     """ Remove the env for given project dir or env id (defaults to CWD) """
 
     # Get env id from project path if not given
@@ -245,12 +245,12 @@ def env_rm(identifier:Path_or_str=None) -> str:
     assert env_dir.parent == NPMENV_DIR
 
     # Remove the env dir (returning project dir for the env as a str)
-    proj_dir = env_dir.joinpath('.project').read_text()
+    proj_dir = Path(env_dir.joinpath('.project').read_text())
     rmtree(env_dir)
     return proj_dir
 
 
-def env_cleanup() -> list:
+def env_cleanup() -> List[Tuple[str, Path, str]]:
     """ Remove envs for projects that no longer exist (no package or lock file) """
     removed = []
     for env_id, env_dir, issue in env_list():
@@ -260,7 +260,7 @@ def env_cleanup() -> list:
     return removed
 
 
-def env_list() -> list:
+def env_list() -> List[Tuple[str, Path, Optional[str]]]:
     """ Return list of tuples (env id, project dir, issue with project existance) """
     envs = []
     for item in NPMENV_DIR.iterdir():
