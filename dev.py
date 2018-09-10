@@ -316,7 +316,7 @@ def release(inv):
 
     # Get version message
     print('\n\n\nList of commits since last release:\n\n')
-    inv.run('git log --date-order {}..HEAD'.format(last_version or ''))  # Avoid None
+    inv.run('git log --reverse {}..HEAD'.format(last_version or ''))  # Avoid None
     while True:
         msg = input("Version message (used in tag and documentation): ")
         print(msg)
