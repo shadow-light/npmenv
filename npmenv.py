@@ -286,3 +286,7 @@ def env_run(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
 
     # Run the given args with the modified env
     return _shell(args, env=process_env)
+
+
+if __name__ == '__main__':
+    _cli()
