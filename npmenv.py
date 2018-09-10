@@ -30,6 +30,7 @@ npmenv {__version__}
 
 env-list            List all currently existing environments
 env-location        Output path to env for current dir (may not exist yet)
+env-modules [name]  List items in node_modules (recursive if package name given)
 env-run cmd [args]  Run command with env's bin dir in start of PATH
 env-rm [env_id]     Remove the env for current dir (or env with given id)
 env-cleanup         Remove envs for projects that no longer exist
@@ -57,6 +58,15 @@ def _cd(path:Path_or_str) -> Generator[Path, None, None]:
         yield path
     finally:
         os.chdir(cwd)
+
+
+def _list_all_files(root):
+    """ Return list of files found recursively in given path """
+    files = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        for filename in filenames:
+            files.append(Path(dirpath).joinpath(filename))
+    return files
 
 
 def _shell(args:str, **kwargs:Any) -> subprocess.CompletedProcess:
@@ -131,6 +141,19 @@ def _cli() -> None:  # noqa: C901 (complexity)
         elif cmd == 'env-location':
             # NOTE No trailing newline so scripts can use without needing to strip
             print(env_location(), end='')
+
+        elif cmd == 'env-modules':
+            if len(env_args) > 1:
+                sys.exit("env-modules was given too many arguments")
+            root = env_location() / 'node_modules'
+            if env_args:
+                root = root / env_args[0]
+            if not root.exists():
+                sys.exit(f"Does not exist: {root}")
+            print(f"Found in {root}\n")
+            paths = _list_all_files(root) if env_args else root.iterdir()
+            paths = [str(p.relative_to(root)) for p in sorted(paths)]
+            print('\n'.join(paths))
 
         elif cmd == 'env-run':
             if not env_args:
