@@ -1,4 +1,8 @@
-/.pytest_cache/
-/.mypy_cache/
+
+# Folders
 /dist/
+/.mypy_cache/
+/.pytest_cache/
+
+# Files
 /.coverage
