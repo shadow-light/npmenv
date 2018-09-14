@@ -1,7 +1,0 @@
-#!/bin/bash
-# Linux only script for executing npmenv's CLI during development
-source_dir=`dirname "$0"`
-pushd "$source_dir" > /dev/null
-. "`pipenv --venv`/bin/activate"
-popd > /dev/null
-python "$source_dir/npmenv.py" "$@"
