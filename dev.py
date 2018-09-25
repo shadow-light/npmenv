@@ -341,6 +341,5 @@ def release(inv):
 # CLI
 
 
-program = Program('source', Collection(test, test_lint, test_unit, doc, package, release))
 if __name__ == '__main__':
-    program.run()
+    Program(namespace=Collection.from_module(sys.modules[__name__])).run()
