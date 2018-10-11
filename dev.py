@@ -111,8 +111,13 @@ def _get_new_version(last_str):
         if level not in levels:
             print("Incorrect level given")
             continue
-        level = levels.index(level)
-        digits[level] += 1
+        digits[levels.index(level)] += 1
+        # Reset minor/patch if level above them changing
+        if level != 'patch':
+            digits[2] = 0
+        if level == 'major':
+            digits[1] = 0
+        # Join with a dot
         version = '.'.join(str(n) for n in digits)
 
         # Confirm version is correct
