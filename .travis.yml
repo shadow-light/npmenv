@@ -47,7 +47,8 @@ before_install: |
 install: |
     test "$UPDATE" == "y" && pipenv update
     pipenv sync --dev
-    pipenv graph  # For debugging's sake
+    # TODO Below disabled pending https://git.io/fxWQQ
+    #pipenv graph  # For debugging's sake
 
 
 script: pipenv run python dev.py test --python $TRAVIS_PYTHON_VERSION
