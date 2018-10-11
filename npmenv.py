@@ -287,7 +287,8 @@ def env_location(proj_dir:Path_or_str=None) -> Path:
     return _get_env_dir(_resolve_proj_dir(proj_dir))
 
 
-def env_run(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
+def env_run(args:str, proj_dir:Path_or_str=None,
+        run_kwargs:Any={}) -> subprocess.CompletedProcess:
     """ Run a command with node_modules/.bin at start of PATH environment variable """
 
     # NOTE If node is installed as a package then it should be used to run scripts
@@ -308,7 +309,7 @@ def env_run(args:str, proj_dir:Path_or_str=None) -> subprocess.CompletedProcess:
     process_env['PATH'] = str(bin_dir) + os.pathsep + process_env['PATH']
 
     # Run the given args with the modified env
-    return _shell(args, env=process_env)
+    return _shell(args, env=process_env, **run_kwargs)
 
 
 if __name__ == '__main__':
