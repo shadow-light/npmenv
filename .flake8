@@ -9,6 +9,10 @@ max-complexity = 15
 
 # E231 Ignored so can do `def fn(arg:type=default):` (no space around ':')
 
+# E722 Ignored as 'except' is shorthand for 'except Exception' which it doesn't detect anyway
+#   Just remember to not catch all unless absolutely necessary
+
 # W503 Ignored as should start newline before operator (the opposite W504 enforces)
 
-ignore = E127, E128, E231, W503
+ignore = E127, E128, E231, E722, W503
+
