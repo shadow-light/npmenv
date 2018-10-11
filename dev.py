@@ -16,6 +16,12 @@ from contextlib import contextmanager
 from invoke import task, Program, Collection
 
 
+# CONSTANTS
+
+
+TWINE_CMD = 'twine upload --sign --username shadow-light dist/*'
+
+
 # UTILS
 
 
@@ -265,9 +271,8 @@ def release(inv):
     package(inv, test_version)
 
     # Upload to test pypi
-    twine_cmd = 'twine upload --sign --username shadow-light dist/*'  # WARN reused later
     os.environ['TWINE_PASSWORD'] = getpass('PyPI password: ')
-    inv.run(twine_cmd + ' --repository-url https://test.pypi.org/legacy/')
+    inv.run(TWINE_CMD + ' --repository-url https://test.pypi.org/legacy/')
 
     # Form new PATH value for subprocess with current venv removed
     path_without_venv = os.environ['PATH'].split(os.pathsep)
@@ -332,6 +337,17 @@ def release(inv):
     if input(f"All looks good. Do the release? (y/n): ") != 'y':
         sys.exit("Release aborted")
 
+    # Do the release
+    release_real(inv, version, msg, True)
+
+
+@task
+def release_real(inv, version, msg, iknowwhatimdoing=False):
+    """ Release a new version (should not normally call manually) """
+
+    if not iknowwhatimdoing:
+        sys.exit("You don't know what you're doing!")
+
     # Tag commit with version
     # WARN Must come before package so version msg is included in the README
     inv.run(f'git tag --sign {version} -m {shlex.quote(msg)}')
@@ -339,7 +355,7 @@ def release(inv):
 
     # Produce package for real PyPI and upload
     package(inv, version)
-    inv.run(twine_cmd)
+    inv.run(TWINE_CMD)
     print(f"Released {version}!")
 
 
