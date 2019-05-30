@@ -2,42 +2,28 @@ import os
 import sys
 import shlex
 import subprocess
-from shutil import rmtree
-from typing import Union, Sequence, Generator, Any, List, Tuple, Optional
+from typing import Union, Sequence, Generator, Any
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from hashlib import sha256
 from contextlib import contextmanager
 
-from appdirs import user_data_dir
-
 
 # CUSTOM TYPES
-
-
 Path_or_str = Union[Path, str]
 
 
 # MODULE LEVEL
 
-
 __version__: str = "source"  # Replaced when packaged
-
 
 HELP: str = f"""
 npmenv {__version__}
 
-env-list            List all currently existing environments
-env-location        Output path to env for current dir (may not exist yet)
-env-modules [name]  List items in node_modules (recursive if package name given)
-env-run cmd [args]  Run command with env's bin dir in start of PATH
-env-rm [env_id]     Remove the env for current dir (or env with given id)
-env-cleanup         Remove envs for projects that no longer exist
 *any npm command*
 """
 
-
-NPMENV_DIR: Path = Path(user_data_dir("npmenv", "shadow-light"))
+NPMENV_DIR: Path = Path(os.getenv("NODE_PATH", ".venv/lib/node_modules/"))
 
 
 class NpmenvException(Exception):
@@ -57,15 +43,6 @@ def _cd(path: Path_or_str) -> Generator[Path, None, None]:
         yield path
     finally:
         os.chdir(cwd)
-
-
-def _list_all_files(root: Path_or_str) -> List[Path]:
-    """ Return list of files found recursively in given path """
-    files = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        for filename in filenames:
-            files.append(Path(dirpath).joinpath(filename))
-    return files
 
 
 def _shell(args: str, **kwargs: Any) -> subprocess.CompletedProcess:
@@ -108,72 +85,26 @@ def _resolve_proj_dir(given_proj_dir: Path_or_str = None) -> Path:
 def _cli() -> None:  # noqa: C901 (complexity)
     """ Process argv and wrap npm or execute custom command """
     cmd = None if len(sys.argv) == 1 else sys.argv[1]
-    env_args = sys.argv[2:]
 
     # Special case: help command prints npmenv commands and then hands over to npm
-    if cmd in (None, "help", "--help", "-h"):
+    if cmd in (None, "help", "--help", "-h", "-?"):
         print(HELP + "\n----------\n\n")
-
-    # Helper for issues
-    def issue_to_str(issue: str = None) -> str:
-        if issue == "missing":
-            return "(no longer exists)"
-        if issue == "no_config":
-            return "(no package.json or lock)"
-        return issue or ""
-
-    # Exit if args given to argless commands
-    if cmd in ("env-list", "env-cleanup", "env-location") and env_args:
-        sys.exit(f"{cmd} doesn't take any arguments")
+        sys.exit(0)
 
     # Run npmenv commands, otherwise handing over to npm
     try:
-        if cmd == "env-list":
-            for env_id, proj_dir, issue in env_list():
-                print(f"{env_id}: {proj_dir} {issue_to_str(issue)}")
-
-        elif cmd == "env-cleanup":
-            print("The following environments have been removed:")
-            for env_id, proj_dir, issue in env_cleanup():
-                print(f"{env_id}: {proj_dir} {issue_to_str(issue)}")
-
-        elif cmd == "env-location":
-            # NOTE No trailing newline so scripts can use without needing to strip
-            print(env_location(), end="")
-
-        elif cmd == "env-modules":
-            if len(env_args) > 1:
-                sys.exit("env-modules was given too many arguments")
-            root = env_location() / "node_modules"
-            if env_args:
-                root = root / env_args[0]
-            if not root.exists():
-                sys.exit(f"Does not exist: {root}")
-            print(f"Found in {root}\n")
-            paths = _list_all_files(root) if env_args else root.iterdir()
-            paths_as_strings = [str(p.relative_to(root)) for p in sorted(paths)]
-            print("\n".join(paths_as_strings))
-
-        elif cmd == "env-run":
-            if not env_args:
-                sys.exit("env-run requires a command to be given")
-            result = env_run(_args_to_str(env_args))
-            # Reflect return code of subprocess in own exit
-            sys.exit(result.returncode)
-
-        elif cmd == "env-rm":
-            if len(env_args) > 1:
-                sys.exit("env-rm was given too many arguments")
-            proj_dir = env_rm(*env_args)
-            print(f"Removed environment for {proj_dir}")
-
+        args = _args_to_str(sys.argv[1:])
+        if args.startswith("npm"):
+            result = env_npm(args)
         else:
-            result = env_npm(_args_to_str(sys.argv[1:]))
-            # Reflect return code of subprocess in own exit
-            sys.exit(result.returncode)
+            result = env_run(args)
 
     except NpmenvException as exc:
         sys.exit(exc)
+
+    else:
+        # Reflect return code of subprocess in own exit
+        sys.exit(result.returncode)
 
 
 # PUBLIC
@@ -205,10 +136,8 @@ def env_npm(
             # Symlink to project file if haven't already
             if not ef.is_symlink():
                 ef.symlink_to(pf)
-        else:
-            # Since project file doesn't exist, remove symlink if it was created
-            if ef.is_symlink():
-                ef.unlink()
+        elif ef.is_symlink():
+            ef.unlink()
 
     # Execute npm in env dir
     with _cd(env_dir):
@@ -224,70 +153,6 @@ def env_npm(
     return result
 
 
-def env_rm(identifier: Path_or_str = None) -> Path:
-    """ Remove the env for given project dir or env id (defaults to CWD) """
-
-    # Get env id from project path if not given
-    if isinstance(identifier, str):
-        env_id = identifier
-    else:
-        env_id = _get_env_id(_resolve_proj_dir(identifier))
-
-    # Determine env dir
-    env_dir = NPMENV_DIR / env_id
-    if not env_dir.exists():
-        # Raise helpful exception
-        join = "with id" if isinstance(identifier, str) else "for dir"
-        value = identifier if identifier else env_dir
-        raise NpmenvException(f"No env exists {join} {value}")
-
-    # Do some double checks since this is a dangerous operation
-    assert env_dir.is_absolute()
-    assert env_dir.parent == NPMENV_DIR
-
-    # Remove the env dir (returning project dir for the env as a str)
-    proj_dir = Path(env_dir.joinpath(".project").read_text())
-    rmtree(env_dir)
-    return proj_dir
-
-
-def env_cleanup() -> List[Tuple[str, Path, str]]:
-    """ Remove envs for projects that no longer exist (no package or lock file) """
-    removed = []
-    for env_id, env_dir, issue in env_list():
-        if issue:
-            env_rm(env_id)
-            removed.append((env_id, env_dir, issue))
-    return removed
-
-
-def env_list() -> List[Tuple[str, Path, Optional[str]]]:
-    """ Return list of tuples (env id, project dir, issue with project existance) """
-    envs = []
-    for item in NPMENV_DIR.iterdir():
-        # NOTE Ignores any files or dirs that don't have a .project file
-        path_file = item.joinpath(".project")
-        if path_file.is_file():
-            # Determine paths from path file
-            proj_dir = Path(path_file.read_text())
-            proj_config = proj_dir.joinpath("package.json")
-            proj_lock = proj_dir.joinpath("package-lock.json")
-            # Also return if any issue with project
-            issue = None
-            if not proj_dir.is_dir():
-                issue = "missing"
-            elif not proj_config.is_file() and not proj_lock.is_file():
-                issue = "no_config"
-            # Add to list
-            envs.append((item.name, proj_dir, issue))
-    return envs
-
-
-def env_location(proj_dir: Path_or_str = None) -> Path:
-    """ Return env dir path for given project dir (may/may not exist yet) """
-    return _get_env_dir(_resolve_proj_dir(proj_dir))
-
-
 def env_run(
     args: str, proj_dir: Path_or_str = None, run_kwargs: Any = {}
 ) -> subprocess.CompletedProcess:
@@ -299,7 +164,6 @@ def env_run(
     # Get path to env's .bin
     proj_dir = _resolve_proj_dir(proj_dir)
     env_dir = _get_env_dir(proj_dir)
-    print(f"env_dir: {env_dir}")  # TODO: Remove later on
     if not env_dir.is_dir():
         raise NpmenvException("Env does not exist (run `npmenv install`)")
     bin_dir = env_dir / "node_modules" / ".bin"
@@ -310,11 +174,7 @@ def env_run(
 
     # Copy env variables and add the env's bin dir to start of PATH
     process_env = os.environ.copy()
-    new_path = str(bin_dir) + os.pathsep + process_env["PATH"]
-    print(f"new_path: {new_path}")
-    new_path_joined = os.path.join(bin_dir, os.pathsep, process_env["PATH"])
-    print(f"new_path via os.path.join: {new_path_joined}")
-    process_env["PATH"] = str(bin_dir) + os.pathsep + process_env["PATH"]  # TODO
+    process_env["PATH"] = os.path.join(bin_dir, os.pathsep, process_env["PATH"])
 
     # Run the given args with the modified env
     return _shell(args, env=process_env, **run_kwargs)

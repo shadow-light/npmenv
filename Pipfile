@@ -3,20 +3,21 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-[packages]
-# WARN lock file should have oldest version set (for dev and CI sake)
-appdirs = "==1.*, >=1.4.3"
-
 [dev-packages]
 "flake8" = "*"
+mypy = "*"
+black = "*"
 invoke = "*"
 pytest = "*"
-mypy = "*"
+pytest-cov = "*"
 twine = "*"
 pipenv = "*"
-pytest-cov = "*"
+vulture = "*"
 
 [requires]
 # Python version used by setup.py (but hard-coded in README.md)
 # NOTE Here for development sake only; CIs need to override for newer version tests
-python_version = "3.6"
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
